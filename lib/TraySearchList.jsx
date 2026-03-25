@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { subscribeToVirtualKeyboard } from "./hooks.js";
 
 /**
- * @typedef {import("./PreactCombobox.jsx").Translations} Translations
+ * @typedef {import("./OptionsListbox.jsx").Translations} Translations
  * @typedef {import("preact").VNode} VNode
  */
 
@@ -149,7 +149,7 @@ const TraySearchList = ({
     // after dialog.close() doesn't seem to work on Chrome (Android).
     <div
       ref={trayModalRef}
-      className={`PreactCombobox-modal ${`PreactCombobox--${theme}`}`}
+      className={`PreactDatefield-modal ${`PreactDatefield--${theme}`}`}
       style={{ display: isOpen ? null : "none" }}
       onClick={(e) => {
         // Close modal when clicking backdrop
@@ -168,12 +168,12 @@ const TraySearchList = ({
       aria-labelledby={trayLabel ? `${id}-tray-label` : undefined}
       tabIndex={-1}
     >
-      <div className={`PreactCombobox-tray ${`PreactCombobox--${theme}`}`}>
-        <div className="PreactCombobox-trayHeader">
+      <div className={`PreactDatefield-tray ${`PreactDatefield--${theme}`}`}>
+        <div className="PreactDatefield-trayHeader">
           {trayLabel && (
             <label
               id={`${id}-tray-label`}
-              className="PreactCombobox-trayLabel"
+              className="PreactDatefield-trayLabel"
               htmlFor={`${id}-tray-input`}
             >
               {trayLabel}
@@ -191,7 +191,7 @@ const TraySearchList = ({
                 handleClose();
               }
             }}
-            className={`PreactCombobox-trayInput ${!trayLabel ? "PreactCombobox-trayInput--noLabel" : ""}`}
+            className={`PreactDatefield-trayInput ${!trayLabel ? "PreactDatefield-trayInput--noLabel" : ""}`}
             role="combobox"
             aria-expanded="true"
             aria-haspopup="listbox"
@@ -208,7 +208,7 @@ const TraySearchList = ({
         </div>
         {virtualKeyboardHeight > 0 && (
           <div
-            className="PreactCombobox-virtualKeyboardSpacer"
+            className="PreactDatefield-virtualKeyboardSpacer"
             style={{ height: `${virtualKeyboardHeight}px` }}
             aria-hidden="true"
           />

@@ -1,9 +1,43 @@
 export default OptionsListbox;
-export type Option = import("./PreactCombobox.jsx").Option;
-export type OptionMatch = import("./PreactCombobox.jsx").OptionMatch;
-export type Translations = import("./PreactCombobox.jsx").Translations;
-export type OptionTransformFunction = import("./PreactCombobox.jsx").OptionTransformFunction;
 export type VNode = import("preact").VNode;
+export type Option = {
+    label: string;
+    value: string;
+    icon?: string | import("preact").VNode<any> | undefined;
+    disabled?: boolean | undefined;
+    divider?: boolean | undefined;
+};
+export type OptionMatch = {
+    label: string;
+    value: string;
+    icon?: string | import("preact").VNode<any> | undefined;
+    disabled?: boolean | undefined;
+    divider?: boolean | undefined;
+    score: number;
+    matched: "value" | "label" | "none";
+    matchSlices: Array<[number, number]>;
+};
+export type Translations = {
+    searchPlaceholder: string;
+    noOptionsFound: string;
+    loadingOptions?: string | undefined;
+    addOption?: string | undefined;
+    selectedOption?: string | undefined;
+    invalidOption?: string | undefined;
+    typeToLoadMore?: string | undefined;
+    clearValue?: string | undefined;
+};
+export type OptionTransformFunction = (params: {
+    option: OptionMatch;
+    language: string;
+    isSelected: boolean;
+    isInvalid: boolean;
+    isActive: boolean;
+    showValue: boolean;
+    warningIcon?: import("preact").VNode<any> | undefined;
+    tickIcon?: import("preact").VNode<any> | undefined;
+    optionIconRenderer?: ((option: Option, isInput?: boolean) => VNode | null) | undefined;
+}) => VNode;
 export type OptionsListboxProps = {
     /**
      * - Component ID for ARIA attributes
@@ -54,31 +88,31 @@ export type OptionsListboxProps = {
     /**
      * - Function to render options
      */
-    optionRenderer: OptionTransformFunction;
+    optionRenderer?: OptionTransformFunction | undefined;
     /**
      * - Warning icon element
      */
-    warningIcon: VNode;
+    warningIcon?: import("preact").VNode<any> | undefined;
     /**
      * - Tick icon element
      */
-    tickIcon: VNode;
+    tickIcon?: import("preact").VNode<any> | undefined;
     /**
      * - Option icon renderer
      */
-    optionIconRenderer: (option: Option, isInput?: boolean) => VNode | null;
+    optionIconRenderer?: ((option: Option, isInput?: boolean) => VNode | null) | undefined;
     /**
      * - Whether to show option values
      */
-    showValue: boolean;
+    showValue?: boolean | undefined;
     /**
      * - Language code for rendering
      */
-    language: string;
+    language?: string | undefined;
     /**
      * - Loading renderer
      */
-    loadingRenderer: (text: string) => VNode | string;
+    loadingRenderer?: ((text: string) => VNode | string) | undefined;
     /**
      * - Translation strings
      */
@@ -147,11 +181,51 @@ export type OptionsListboxRef = {
     clearActiveDescendant: () => void;
 };
 /**
- * @typedef {import("./PreactCombobox.jsx").Option} Option
- * @typedef {import("./PreactCombobox.jsx").OptionMatch} OptionMatch
- * @typedef {import("./PreactCombobox.jsx").Translations} Translations
- * @typedef {import("./PreactCombobox.jsx").OptionTransformFunction} OptionTransformFunction
  * @typedef {import("preact").VNode} VNode
+ */
+/**
+ * @typedef {Object} Option
+ * @property {string} label
+ * @property {string} value
+ * @property {VNode | string} [icon]
+ * @property {boolean} [disabled]
+ * @property {boolean} [divider]
+ */
+/**
+ * @typedef {Object} OptionMatch
+ * @property {string} label
+ * @property {string} value
+ * @property {VNode|string} [icon]
+ * @property {boolean} [disabled]
+ * @property {boolean} [divider]
+ * @property {number} score
+ * @property {'value' | 'label' | 'none'} matched
+ * @property {Array<[number, number]>} matchSlices
+ */
+/**
+ * @typedef {Object} Translations
+ * @property {string} searchPlaceholder
+ * @property {string} noOptionsFound
+ * @property {string} [loadingOptions]
+ * @property {string} [addOption]
+ * @property {string} [selectedOption]
+ * @property {string} [invalidOption]
+ * @property {string} [typeToLoadMore]
+ * @property {string} [clearValue]
+ */
+/**
+ * @callback OptionTransformFunction
+ * @param {Object} params
+ * @param {OptionMatch} params.option
+ * @param {string} params.language
+ * @param {boolean} params.isSelected
+ * @param {boolean} params.isInvalid
+ * @param {boolean} params.isActive
+ * @param {boolean} params.showValue
+ * @param {VNode} [params.warningIcon]
+ * @param {VNode} [params.tickIcon]
+ * @param {(option: Option, isInput?: boolean) => VNode|null} [params.optionIconRenderer]
+ * @returns {VNode}
  */
 /**
  * @typedef {Object} OptionsListboxProps
@@ -166,13 +240,13 @@ export type OptionsListboxRef = {
  * @property {(selectedValue: string, options?: {toggleSelected?: boolean}) => void} onOptionSelect - Handle option selection
  * @property {(value: string) => void} [onActiveDescendantChange] - Callback when active descendant changes (for aria-activedescendant)
  * @property {() => void} [onClose] - Handle close (for single-select)
- * @property {OptionTransformFunction} optionRenderer - Function to render options
- * @property {VNode} warningIcon - Warning icon element
- * @property {VNode} tickIcon - Tick icon element
- * @property {(option: Option, isInput?: boolean) => VNode|null} optionIconRenderer - Option icon renderer
- * @property {boolean} showValue - Whether to show option values
- * @property {string} language - Language code for rendering
- * @property {(text: string) => VNode|string} loadingRenderer - Loading renderer
+ * @property {OptionTransformFunction} [optionRenderer] - Function to render options
+ * @property {VNode} [warningIcon] - Warning icon element
+ * @property {VNode} [tickIcon] - Tick icon element
+ * @property {(option: Option, isInput?: boolean) => VNode|null} [optionIconRenderer] - Option icon renderer
+ * @property {boolean} [showValue] - Whether to show option values
+ * @property {string} [language] - Language code for rendering
+ * @property {(text: string) => VNode|string} [loadingRenderer] - Loading renderer
  * @property {Translations} translations - Translation strings
  * @property {string} theme - Theme for styling
  * @property {number} maxPresentedOptions - Maximum number of options presented

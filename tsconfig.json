@@ -28,6 +28,6 @@
     "jsxImportSource": "preact"
   },
   // Include the necessary files for your project
-  "include": ["lib/PreactCombobox.jsx"],
+  "include": ["lib/PreactDatefield.jsx"],
   "exclude": ["node_modules"]
 }

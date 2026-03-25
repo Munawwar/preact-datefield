@@ -1,6 +1,6 @@
 /**
- * @typedef {import("./PreactCombobox.jsx").Option} Option
- * @typedef {import("./PreactCombobox.jsx").OptionMatch} OptionMatch
+ * @typedef {import("./OptionsListbox.jsx").Option} Option
+ * @typedef {import("./OptionsListbox.jsx").OptionMatch} OptionMatch
  * @typedef {import("preact").VNode} VNode
  */
 

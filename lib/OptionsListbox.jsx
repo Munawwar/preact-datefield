@@ -3,11 +3,55 @@ import { useCallback, useEffect, useImperativeHandle, useRef, useState } from "p
 import { toHTMLId } from "./utils.jsx";
 
 /**
- * @typedef {import("./PreactCombobox.jsx").Option} Option
- * @typedef {import("./PreactCombobox.jsx").OptionMatch} OptionMatch
- * @typedef {import("./PreactCombobox.jsx").Translations} Translations
- * @typedef {import("./PreactCombobox.jsx").OptionTransformFunction} OptionTransformFunction
  * @typedef {import("preact").VNode} VNode
+ */
+
+/**
+ * @typedef {Object} Option
+ * @property {string} label
+ * @property {string} value
+ * @property {VNode | string} [icon]
+ * @property {boolean} [disabled]
+ * @property {boolean} [divider]
+ */
+
+/**
+ * @typedef {Object} OptionMatch
+ * @property {string} label
+ * @property {string} value
+ * @property {VNode|string} [icon]
+ * @property {boolean} [disabled]
+ * @property {boolean} [divider]
+ * @property {number} score
+ * @property {'value' | 'label' | 'none'} matched
+ * @property {Array<[number, number]>} matchSlices
+ */
+
+/**
+ * @typedef {Object} Translations
+ * @property {string} searchPlaceholder
+ * @property {string} noOptionsFound
+ * @property {string} [loadingOptions]
+ * @property {string} [addOption]
+ * @property {string} [selectedOption]
+ * @property {string} [invalidOption]
+ * @property {string} [typeToLoadMore]
+ * @property {string} [clearValue]
+ */
+
+/**
+ * @callback OptionTransformFunction
+ * @param {Object} params
+ * @param {OptionMatch} params.option
+ * @param {string} params.language
+ * @param {boolean} params.isSelected
+ * @param {boolean} params.isInvalid
+ * @param {boolean} params.isActive
+ * @param {boolean} params.showValue
+ * @param {VNode} [params.warningIcon]
+ * @param {VNode} [params.tickIcon]
+ * @param {(option: Option, isInput?: boolean) => VNode|null} [params.optionIconRenderer]
+ * @returns {VNode}
  */
 
 /**
@@ -23,13 +67,13 @@ import { toHTMLId } from "./utils.jsx";
  * @property {(selectedValue: string, options?: {toggleSelected?: boolean}) => void} onOptionSelect - Handle option selection
  * @property {(value: string) => void} [onActiveDescendantChange] - Callback when active descendant changes (for aria-activedescendant)
  * @property {() => void} [onClose] - Handle close (for single-select)
- * @property {OptionTransformFunction} optionRenderer - Function to render options
- * @property {VNode} warningIcon - Warning icon element
- * @property {VNode} tickIcon - Tick icon element
- * @property {(option: Option, isInput?: boolean) => VNode|null} optionIconRenderer - Option icon renderer
- * @property {boolean} showValue - Whether to show option values
- * @property {string} language - Language code for rendering
- * @property {(text: string) => VNode|string} loadingRenderer - Loading renderer
+ * @property {OptionTransformFunction} [optionRenderer] - Function to render options
+ * @property {VNode} [warningIcon] - Warning icon element
+ * @property {VNode} [tickIcon] - Tick icon element
+ * @property {(option: Option, isInput?: boolean) => VNode|null} [optionIconRenderer] - Option icon renderer
+ * @property {boolean} [showValue] - Whether to show option values
+ * @property {string} [language] - Language code for rendering
+ * @property {(text: string) => VNode|string} [loadingRenderer] - Loading renderer
  * @property {Translations} translations - Translation strings
  * @property {string} theme - Theme for styling
  * @property {number} maxPresentedOptions - Maximum number of options presented
@@ -179,7 +223,7 @@ const OptionsListbox = forwardRef(
         navigatePageDown: () => {
           const options = getNavigableOptions();
           if (options.length === 0) return;
-          const firstOptionEl = listRef.current?.querySelector(".PreactCombobox-option");
+          const firstOptionEl = listRef.current?.querySelector(".PreactDatefield-option");
           const pageSize =
             listRef.current && firstOptionEl
               ? Math.max(
@@ -200,7 +244,7 @@ const OptionsListbox = forwardRef(
         navigatePageUp: () => {
           const options = getNavigableOptions();
           if (options.length === 0) return;
-          const firstOptionEl = listRef.current?.querySelector(".PreactCombobox-option");
+          const firstOptionEl = listRef.current?.querySelector(".PreactDatefield-option");
           const pageSize =
             listRef.current && firstOptionEl
               ? Math.max(
@@ -293,9 +337,9 @@ const OptionsListbox = forwardRef(
       // biome-ignore lint/a11y/useFocusableInteractive: <explanation>
       <ul
         className={[
-          "PreactCombobox-options",
-          `PreactCombobox--${theme}`,
-          shouldUseTray ? "PreactCombobox-options--tray" : "",
+          "PreactDatefield-options",
+          `PreactDatefield--${theme}`,
+          shouldUseTray ? "PreactDatefield-options--tray" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -306,9 +350,9 @@ const OptionsListbox = forwardRef(
         hidden={!isOpen}
         ref={handleListRef}
       >
-        {isLoading ? (
-          <li className="PreactCombobox-option" aria-disabled>
-            {loadingRenderer(translations.loadingOptions)}
+        {isLoading && loadingRenderer ? (
+          <li className="PreactDatefield-option" aria-disabled>
+            {loadingRenderer(translations.loadingOptions || "Loading...")}
           </li>
         ) : (
           <>
@@ -316,7 +360,7 @@ const OptionsListbox = forwardRef(
               <li
                 key={searchTextTrimmed}
                 id={`${id}-option-${toHTMLId(searchTextTrimmed)}`}
-                className={`PreactCombobox-option ${activeDescendant === searchTextTrimmed ? "PreactCombobox-option--active" : ""}`}
+                className={`PreactDatefield-option ${activeDescendant === searchTextTrimmed ? "PreactDatefield-option--active" : ""}`}
                 // biome-ignore lint/a11y/useSemanticElements: parent is <ul> so want to keep equivalent semantics
                 role="option"
                 tabIndex={-1}
@@ -331,7 +375,7 @@ const OptionsListbox = forwardRef(
                   }
                 }}
               >
-                {translations.addOption.replace("{value}", searchTextTrimmed)}
+                {(translations.addOption || 'Add "{value}"').replace("{value}", searchTextTrimmed)}
               </li>
             )}
             {filteredOptions.map((/** @type {OptionMatch} */ option) => {
@@ -341,12 +385,12 @@ const OptionsListbox = forwardRef(
               const isDisabled = option.disabled;
               const hasDivider = option.divider && !searchTextTrimmed;
               const optionClasses = [
-                "PreactCombobox-option",
-                isActive ? "PreactCombobox-option--active" : "",
-                isSelected ? "PreactCombobox-option--selected" : "",
-                isInvalid ? "PreactCombobox-option--invalid" : "",
-                isDisabled ? "PreactCombobox-option--disabled" : "",
-                hasDivider ? "PreactCombobox-option--divider" : "",
+                "PreactDatefield-option",
+                isActive ? "PreactDatefield-option--active" : "",
+                isSelected ? "PreactDatefield-option--selected" : "",
+                isInvalid ? "PreactDatefield-option--invalid" : "",
+                isDisabled ? "PreactDatefield-option--disabled" : "",
+                hasDivider ? "PreactDatefield-option--divider" : "",
               ]
                 .filter(Boolean)
                 .join(" ");
@@ -371,20 +415,22 @@ const OptionsListbox = forwardRef(
                     }
                   }}
                 >
-                  {optionRenderer({
-                    option,
-                    language,
-                    isActive,
-                    isSelected,
-                    isInvalid,
-                    showValue,
-                    warningIcon,
-                    tickIcon,
-                    optionIconRenderer,
-                  })}
-                  {isSelected ? (
+                  {optionRenderer
+                    ? optionRenderer({
+                        option,
+                        language: language || "en",
+                        isActive,
+                        isSelected,
+                        isInvalid,
+                        showValue: showValue || false,
+                        warningIcon,
+                        tickIcon,
+                        optionIconRenderer,
+                      })
+                    : option.label}
+                  {isSelected && translations.selectedOption ? (
                     <span
-                      className="PreactCombobox-srOnly"
+                      className="PreactDatefield-srOnly"
                       aria-atomic="true"
                       data-reader="selected"
                       aria-hidden={!isActive}
@@ -392,9 +438,9 @@ const OptionsListbox = forwardRef(
                       {translations.selectedOption}
                     </span>
                   ) : null}
-                  {isInvalid ? (
+                  {isInvalid && translations.invalidOption ? (
                     <span
-                      className="PreactCombobox-srOnly"
+                      className="PreactDatefield-srOnly"
                       aria-atomic="true"
                       data-reader="invalid"
                       aria-hidden={!isActive}
@@ -408,10 +454,10 @@ const OptionsListbox = forwardRef(
             {filteredOptions.length === 0 &&
               !isLoading &&
               (!allowFreeText || !searchText || arrayValues.includes(searchText)) && (
-                <li className="PreactCombobox-option">{translations.noOptionsFound}</li>
+                <li className="PreactDatefield-option">{translations.noOptionsFound}</li>
               )}
-            {filteredOptions.length === maxPresentedOptions && (
-              <li className="PreactCombobox-option">{translations.typeToLoadMore}</li>
+            {filteredOptions.length === maxPresentedOptions && translations.typeToLoadMore && (
+              <li className="PreactDatefield-option">{translations.typeToLoadMore}</li>
             )}
           </>
         )}

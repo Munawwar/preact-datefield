@@ -5,7 +5,7 @@
   },
   "files": {
     "include": ["lib/**/*.jsx", "lib/**/*.js", "lib/**/*.css"],
-    "ignore": ["lib/PreactCombobox.d.ts"]
+    "ignore": ["lib/PreactDatefield.d.ts"]
   },
   "linter": {
     "enabled": true,

@@ -17,18 +17,14 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// lib/PreactCombobox.jsx
-var PreactCombobox_exports = {};
-__export(PreactCombobox_exports, {
-  OptionsListbox: () => OptionsListbox_default,
-  default: () => PreactCombobox_default,
-  defaultOptionRenderer: () => defaultOptionRenderer,
-  getMatchScore: () => getMatchScore,
-  matchSlicesToNodes: () => matchSlicesToNodes,
-  sortValuesToTop: () => sortValuesToTop,
-  useAsyncOptions: () => useAsyncOptions
+// lib/PreactDatefield.jsx
+var PreactDatefield_exports = {};
+__export(PreactDatefield_exports, {
+  buildDateSuggestions: () => buildDateSuggestions,
+  default: () => PreactDatefield_default,
+  isoToDisplayLabel: () => isoToDisplayLabel
 });
-module.exports = __toCommonJS(PreactCombobox_exports);
+module.exports = __toCommonJS(PreactDatefield_exports);
 
 // node_modules/@popperjs/core/lib/enums.js
 var top = "top";
@@ -2130,262 +2126,8 @@ function u3(e3, t3, n2, o3, i4, u4) {
 }
 
 // lib/utils.jsx
-var languageCache = {};
 function toHTMLId(text) {
   return text.replace(/[^a-zA-Z0-9\-_:.]/g, "");
-}
-function sortValuesToTop(options, values) {
-  const selectedSet = new Set(values);
-  return options.sort((a3, b2) => {
-    const aSelected = selectedSet.has(a3.value);
-    const bSelected = selectedSet.has(b2.value);
-    if (aSelected === bSelected) return 0;
-    return aSelected ? -1 : 1;
-  });
-}
-function getExactMatchScore(query, option, language) {
-  const { label, value, ...rest } = option;
-  if (value === query) {
-    return {
-      ...rest,
-      label,
-      value,
-      score: 9,
-      /** @type {'value'} */
-      matched: "value",
-      /** @type {Array<[number, number]>} */
-      matchSlices: [[0, value.length]]
-    };
-  }
-  if (label === query) {
-    return {
-      ...rest,
-      label,
-      value,
-      score: 9,
-      /** @type {'label'} */
-      matched: "label",
-      /** @type {Array<[number, number]>} */
-      matchSlices: [[0, label.length]]
-    };
-  }
-  const { caseMatcher } = (
-    /** @type {LanguageCache} */
-    languageCache[language]
-  );
-  if (caseMatcher.compare(value, query) === 0) {
-    return {
-      ...rest,
-      label,
-      value,
-      score: 7,
-      /** @type {'value'} */
-      matched: "value",
-      /** @type {Array<[number, number]>} */
-      matchSlices: [[0, value.length]]
-    };
-  }
-  if (caseMatcher.compare(label, query) === 0) {
-    return {
-      ...rest,
-      label,
-      value,
-      score: 7,
-      /** @type {'label'} */
-      matched: "label",
-      /** @type {Array<[number, number]>} */
-      matchSlices: [[0, label.length]]
-    };
-  }
-  return null;
-}
-function getMatchScore(query, options, language = "en", filterAndSort = true) {
-  query = query.trim();
-  if (!query) {
-    const matchSlices = (
-      /** @type {Array<[number, number]>} */
-      []
-    );
-    return options.map((option) => ({
-      ...option,
-      label: option.label,
-      value: option.value,
-      score: 0,
-      matched: "none",
-      matchSlices
-    }));
-  }
-  if (!languageCache[language]) {
-    languageCache[language] = {
-      baseMatcher: new Intl.Collator(language, {
-        usage: "search",
-        sensitivity: "base"
-      }),
-      caseMatcher: new Intl.Collator(language, {
-        usage: "search",
-        sensitivity: "accent"
-      }),
-      wordSegmenter: new Intl.Segmenter(language, {
-        granularity: "word"
-      })
-    };
-  }
-  const { baseMatcher, caseMatcher, wordSegmenter } = languageCache[language];
-  const isCommaSeparated = query.includes(",");
-  let matches = options.map((option) => {
-    const { label, value, ...rest } = option;
-    if (isCommaSeparated) {
-      const querySegments2 = query.split(",");
-      const matches2 = querySegments2.map((querySegment) => getExactMatchScore(querySegment.trim(), option, language)).filter((match) => match !== null).sort((a3, b2) => b2.score - a3.score);
-      return (
-        /** @type {OptionMatch} */
-        matches2[0] || {
-          ...rest,
-          label,
-          value,
-          score: 0,
-          matched: "none"
-        }
-      );
-    }
-    const exactMatch = getExactMatchScore(query, option, language);
-    if (exactMatch) {
-      return exactMatch;
-    }
-    if (baseMatcher.compare(label, query) === 0) {
-      return {
-        ...rest,
-        label,
-        value,
-        score: 5,
-        /** @type {'label'} */
-        matched: "label",
-        /** @type {Array<[number, number]>} */
-        matchSlices: [[0, label.length]]
-      };
-    }
-    if (baseMatcher.compare(value, query) === 0) {
-      return {
-        ...rest,
-        label,
-        value,
-        score: 5,
-        /** @type {'value'} */
-        matched: "value",
-        /** @type {Array<[number, number]>} */
-        matchSlices: [[0, value.length]]
-      };
-    }
-    const querySegments = Array.from(wordSegmenter.segment(query));
-    const labelWordSegments = Array.from(wordSegmenter.segment(label.trim()));
-    let len = 0;
-    let firstIndex = -1;
-    for (let i4 = 0; i4 < labelWordSegments.length; i4++) {
-      const labelWordSegment = (
-        /** @type {Intl.SegmentData} */
-        labelWordSegments[i4]
-      );
-      const querySegment = querySegments[len];
-      if (!querySegment) break;
-      if (len === querySegments.length - 1) {
-        const lastQueryWord = querySegment.segment;
-        if (baseMatcher.compare(
-          labelWordSegment.segment.slice(0, lastQueryWord.length),
-          lastQueryWord
-        ) === 0) {
-          return {
-            ...rest,
-            label,
-            value,
-            score: 3,
-            /** @type {'label'} */
-            matched: "label",
-            /** @type {Array<[number, number]>} */
-            // @ts-ignore
-            matchSlices: [
-              [
-                firstIndex > -1 ? firstIndex : labelWordSegment.index,
-                labelWordSegment.index + lastQueryWord.length
-              ]
-            ]
-          };
-        }
-      } else if (baseMatcher.compare(labelWordSegment.segment, querySegment.segment) === 0) {
-        len++;
-        if (len === 1) {
-          firstIndex = labelWordSegment.index;
-        }
-        continue;
-      }
-      len = 0;
-      firstIndex = -1;
-    }
-    if (caseMatcher.compare(value.slice(0, query.length), query) === 0) {
-      return {
-        ...rest,
-        label,
-        value,
-        score: 3,
-        /** @type {'value'} */
-        matched: "value",
-        /** @type {Array<[number, number]>} */
-        matchSlices: [[0, query.length]]
-      };
-    }
-    const queryWords = querySegments.filter((s3) => s3.isWordLike);
-    const labelWords = labelWordSegments.filter((s3) => s3.isWordLike);
-    const slices = queryWords.map((word) => {
-      const match = labelWords.find(
-        (labelWord) => baseMatcher.compare(labelWord.segment, word.segment) === 0
-      );
-      if (match) {
-        return [match.index, match.index + match.segment.length];
-      }
-    });
-    const matchSlices = slices.filter((s3) => s3 !== void 0).sort((a3, b2) => a3[0] - b2[0]);
-    const wordScoring = matchSlices.length / queryWords.length;
-    return {
-      ...rest,
-      label,
-      value,
-      score: wordScoring,
-      /** @type {'label'|'none'} */
-      matched: wordScoring ? "label" : "none",
-      matchSlices
-    };
-  });
-  if (filterAndSort) {
-    matches = matches.filter((match) => match.score > 0);
-    matches.sort((a3, b2) => {
-      if (a3.score === b2.score) {
-        const val = a3.label.localeCompare(b2.label, void 0, {
-          sensitivity: "base"
-        });
-        return val === 0 ? a3.value.localeCompare(b2.value, void 0, { sensitivity: "base" }) : val;
-      }
-      return b2.score - a3.score;
-    });
-  }
-  return matches;
-}
-function matchSlicesToNodes(matchSlices, text) {
-  const nodes = (
-    /** @type {VNode[]} */
-    []
-  );
-  let index = 0;
-  matchSlices.map((slice) => {
-    const [start2, end2] = slice;
-    if (index < start2) {
-      nodes.push(/* @__PURE__ */ u3("span", { children: text.slice(index, start2) }, `${index}-${start2}`));
-    }
-    nodes.push(/* @__PURE__ */ u3("u", { children: text.slice(start2, end2) }, `${start2}-${end2}`));
-    index = end2;
-  });
-  if (index < text.length) {
-    nodes.push(/* @__PURE__ */ u3("span", { children: text.slice(index) }, `${index}-${text.length}`));
-  }
-  return nodes;
 }
 
 // lib/OptionsListbox.jsx
@@ -2494,7 +2236,7 @@ var OptionsListbox = D3(
         navigatePageDown: () => {
           const options = getNavigableOptions();
           if (options.length === 0) return;
-          const firstOptionEl = listRef.current?.querySelector(".PreactCombobox-option");
+          const firstOptionEl = listRef.current?.querySelector(".PreactDatefield-option");
           const pageSize = listRef.current && firstOptionEl ? Math.max(
             1,
             Math.floor(
@@ -2512,7 +2254,7 @@ var OptionsListbox = D3(
         navigatePageUp: () => {
           const options = getNavigableOptions();
           if (options.length === 0) return;
-          const firstOptionEl = listRef.current?.querySelector(".PreactCombobox-option");
+          const firstOptionEl = listRef.current?.querySelector(".PreactDatefield-option");
           const pageSize = listRef.current && firstOptionEl ? Math.max(
             1,
             Math.floor(
@@ -2594,21 +2336,21 @@ var OptionsListbox = D3(
         "ul",
         {
           className: [
-            "PreactCombobox-options",
-            `PreactCombobox--${theme}`,
-            shouldUseTray ? "PreactCombobox-options--tray" : ""
+            "PreactDatefield-options",
+            `PreactDatefield--${theme}`,
+            shouldUseTray ? "PreactDatefield-options--tray" : ""
           ].filter(Boolean).join(" "),
           role: "listbox",
           id: `${id}-options-listbox`,
           "aria-multiselectable": multiple ? "true" : void 0,
           hidden: !isOpen,
           ref: handleListRef,
-          children: isLoading ? /* @__PURE__ */ u3("li", { className: "PreactCombobox-option", "aria-disabled": true, children: loadingRenderer(translations.loadingOptions) }) : /* @__PURE__ */ u3(k, { children: [
+          children: isLoading && loadingRenderer ? /* @__PURE__ */ u3("li", { className: "PreactDatefield-option", "aria-disabled": true, children: loadingRenderer(translations.loadingOptions || "Loading...") }) : /* @__PURE__ */ u3(k, { children: [
             addNewOptionVisible && /* @__PURE__ */ u3(
               "li",
               {
                 id: `${id}-option-${toHTMLId(searchTextTrimmed)}`,
-                className: `PreactCombobox-option ${activeDescendant === searchTextTrimmed ? "PreactCombobox-option--active" : ""}`,
+                className: `PreactDatefield-option ${activeDescendant === searchTextTrimmed ? "PreactDatefield-option--active" : ""}`,
                 role: "option",
                 tabIndex: -1,
                 "aria-selected": false,
@@ -2621,7 +2363,7 @@ var OptionsListbox = D3(
                     onClose();
                   }
                 },
-                children: translations.addOption.replace("{value}", searchTextTrimmed)
+                children: (translations.addOption || 'Add "{value}"').replace("{value}", searchTextTrimmed)
               },
               searchTextTrimmed
             ),
@@ -2632,12 +2374,12 @@ var OptionsListbox = D3(
               const isDisabled = option.disabled;
               const hasDivider = option.divider && !searchTextTrimmed;
               const optionClasses = [
-                "PreactCombobox-option",
-                isActive ? "PreactCombobox-option--active" : "",
-                isSelected ? "PreactCombobox-option--selected" : "",
-                isInvalid ? "PreactCombobox-option--invalid" : "",
-                isDisabled ? "PreactCombobox-option--disabled" : "",
-                hasDivider ? "PreactCombobox-option--divider" : ""
+                "PreactDatefield-option",
+                isActive ? "PreactDatefield-option--active" : "",
+                isSelected ? "PreactDatefield-option--selected" : "",
+                isInvalid ? "PreactDatefield-option--invalid" : "",
+                isDisabled ? "PreactDatefield-option--disabled" : "",
+                hasDivider ? "PreactDatefield-option--divider" : ""
               ].filter(Boolean).join(" ");
               return /* @__PURE__ */ u3(
                 "li",
@@ -2659,31 +2401,31 @@ var OptionsListbox = D3(
                     }
                   },
                   children: [
-                    optionRenderer({
+                    optionRenderer ? optionRenderer({
                       option,
-                      language,
+                      language: language || "en",
                       isActive,
                       isSelected,
                       isInvalid,
-                      showValue,
+                      showValue: showValue || false,
                       warningIcon,
                       tickIcon,
                       optionIconRenderer
-                    }),
-                    isSelected ? /* @__PURE__ */ u3(
+                    }) : option.label,
+                    isSelected && translations.selectedOption ? /* @__PURE__ */ u3(
                       "span",
                       {
-                        className: "PreactCombobox-srOnly",
+                        className: "PreactDatefield-srOnly",
                         "aria-atomic": "true",
                         "data-reader": "selected",
                         "aria-hidden": !isActive,
                         children: translations.selectedOption
                       }
                     ) : null,
-                    isInvalid ? /* @__PURE__ */ u3(
+                    isInvalid && translations.invalidOption ? /* @__PURE__ */ u3(
                       "span",
                       {
-                        className: "PreactCombobox-srOnly",
+                        className: "PreactDatefield-srOnly",
                         "aria-atomic": "true",
                         "data-reader": "invalid",
                         "aria-hidden": !isActive,
@@ -2695,8 +2437,8 @@ var OptionsListbox = D3(
                 option.value
               );
             }),
-            filteredOptions.length === 0 && !isLoading && (!allowFreeText || !searchText || arrayValues.includes(searchText)) && /* @__PURE__ */ u3("li", { className: "PreactCombobox-option", children: translations.noOptionsFound }),
-            filteredOptions.length === maxPresentedOptions && /* @__PURE__ */ u3("li", { className: "PreactCombobox-option", children: translations.typeToLoadMore })
+            filteredOptions.length === 0 && !isLoading && (!allowFreeText || !searchText || arrayValues.includes(searchText)) && /* @__PURE__ */ u3("li", { className: "PreactDatefield-option", children: translations.noOptionsFound }),
+            filteredOptions.length === maxPresentedOptions && translations.typeToLoadMore && /* @__PURE__ */ u3("li", { className: "PreactDatefield-option", children: translations.typeToLoadMore })
           ] })
         }
       )
@@ -2706,54 +2448,6 @@ var OptionsListbox = D3(
 var OptionsListbox_default = OptionsListbox;
 
 // lib/hooks.js
-function isEqual(value1, value2) {
-  const seenA = /* @__PURE__ */ new WeakMap();
-  const seenB = /* @__PURE__ */ new WeakMap();
-  function deepCompare(a3, b2) {
-    if (Object.is(a3, b2)) return true;
-    if (a3 === null || b2 === null || typeof a3 !== "object" || typeof b2 !== "object") {
-      return a3 === b2;
-    }
-    if (a3.$$typeof === Symbol.for("react.element") || b2.$$typeof === Symbol.for("react.element")) {
-      return a3 === b2;
-    }
-    if (Object.getPrototypeOf(a3) !== Object.getPrototypeOf(b2)) {
-      return false;
-    }
-    if (seenA.has(a3)) return seenA.get(a3) === b2;
-    if (seenB.has(b2)) return seenB.get(b2) === a3;
-    if (seenA.has(b2) || seenB.has(a3)) return false;
-    seenA.set(a3, b2);
-    seenB.set(b2, a3);
-    if (Array.isArray(a3)) {
-      if (a3.length !== b2.length) {
-        return false;
-      }
-      return a3.every((item, index) => deepCompare(item, b2[index]));
-    }
-    if (a3 instanceof Date) {
-      return a3.getTime() === b2.getTime();
-    }
-    if (a3 instanceof RegExp) {
-      return a3.toString() === b2.toString();
-    }
-    const keysA = Object.keys(a3);
-    const keysB = Object.keys(b2);
-    if (keysA.length !== keysB.length) return false;
-    return keysA.every((key) => keysB.includes(key) && deepCompare(a3[key], b2[key]));
-  }
-  return deepCompare(value1, value2);
-}
-function useDeepMemo(newState) {
-  const state = A2(
-    /** @type {T} */
-    null
-  );
-  if (!isEqual(newState, state.current)) {
-    state.current = newState;
-  }
-  return state.current;
-}
 function useLive(initialValue) {
   const [refreshValue, forceRefresh] = h2(0);
   const ref = A2(initialValue);
@@ -2795,210 +2489,6 @@ function subscribeToVirtualKeyboard({ visibleCallback, heightCallback }) {
   };
 }
 var isPlaywright = typeof navigator !== "undefined" && navigator.webdriver === true;
-function useAsyncOptions({
-  allowedOptions: allowedOptionsOriginal,
-  selectedValues: selectedValuesOriginal,
-  searchText,
-  isOpen,
-  language,
-  maxNumberOfPresentedOptions
-}) {
-  const [filteredOptions, setFilteredOptions] = h2(
-    /** @type {OptionMatch[]} */
-    []
-  );
-  const [isLoading, setIsLoading] = h2(false);
-  const [cacheVersion, setCacheVersion] = h2(0);
-  const cachedOptions = A2(
-    /** @type {{ [value: string]: Option }} */
-    {}
-  );
-  const abortControllerRef = A2(
-    /** @type {AbortController | null} */
-    null
-  );
-  const debounceTimerRef = A2(
-    /** @type {ReturnType<typeof setTimeout> | null} */
-    null
-  );
-  const wasOpenRef = A2(false);
-  const searchTextTrimmed = searchText.trim();
-  const isFunction = typeof allowedOptionsOriginal === "function";
-  const allowedOptions = useDeepMemo(allowedOptionsOriginal);
-  const selectedValues = useDeepMemo(selectedValuesOriginal);
-  const updateCachedOptions = q2(
-    /** @param {Option[]} update */
-    (update) => {
-      let hasChanged = false;
-      for (const item of update) {
-        if (!cachedOptions.current[item.value] || !isEqual(cachedOptions.current[item.value], item)) {
-          hasChanged = true;
-          cachedOptions.current[item.value] = item;
-        }
-      }
-      if (hasChanged) {
-        setCacheVersion((v3) => v3 + 1);
-      }
-    },
-    []
-  );
-  const resolvedOptionsLookup = T2(() => {
-    if (Array.isArray(allowedOptions)) {
-      return allowedOptions.reduce(
-        (acc, o3) => {
-          acc[o3.value] = o3;
-          return acc;
-        },
-        /** @type {{ [value: string]: Option }} */
-        {}
-      );
-    }
-    return { ...cachedOptions.current };
-  }, [allowedOptions, cacheVersion]);
-  const unresolvedValues = T2(
-    () => selectedValues.filter((v3) => !resolvedOptionsLookup[v3]),
-    [selectedValues, cacheVersion]
-  );
-  y2(() => {
-    if (!isFunction) return;
-    if (unresolvedValues.length === 0) return;
-    const fetchOptions = (
-      /**
-      * @type {(
-      *  queryOrValues: string[]
-      *  | string, limit: number, currentSelections: string[], signal: AbortSignal
-      * ) => Promise<Option[]>}
-      */
-      allowedOptions
-    );
-    const currentSelectedValues = selectedValues;
-    const abortController = new AbortController();
-    fetchOptions(
-      unresolvedValues,
-      unresolvedValues.length,
-      currentSelectedValues,
-      abortController.signal
-    ).then((results) => {
-      if (abortController.signal.aborted) return;
-      if (results?.length) {
-        updateCachedOptions(results);
-      }
-      const stillUnresolved = unresolvedValues.filter(
-        (v3) => !results?.find((r3) => r3.value === v3)
-      );
-      if (stillUnresolved.length > 0) {
-        updateCachedOptions(stillUnresolved.map((v3) => ({ label: v3, value: v3 })));
-      }
-    }).catch((error) => {
-      if (abortController.signal.aborted) return;
-      console.error("Failed to resolve option labels:", error);
-      updateCachedOptions(unresolvedValues.map((v3) => ({ label: v3, value: v3 })));
-    });
-    return () => abortController.abort();
-  }, [
-    // effect should only run when there is selected values with unknown labels
-    unresolvedValues.length > 0,
-    // selectValues doesn't need to be a dependency
-    // this effect only applies to remote fetches, i.e. only when allowedOptions is a function.
-    isFunction ? allowedOptions : null,
-    updateCachedOptions
-  ]);
-  y2(() => {
-    abortControllerRef.current?.abort();
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-    if (!isOpen) {
-      setFilteredOptions([]);
-      setIsLoading(false);
-      wasOpenRef.current = false;
-      return;
-    }
-    const isFirstOpen = !wasOpenRef.current;
-    wasOpenRef.current = true;
-    if (isFunction) {
-      const fetchFn = (
-        /** @type {(queryOrValues: string[] | string, limit: number, currentSelections: string[], signal: AbortSignal) => Promise<Option[]>} */
-        allowedOptions
-      );
-      const currentSelectedValues = selectedValues;
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-      let debounceTime = isPlaywright ? 5 : 250;
-      if (isFirstOpen) debounceTime = 0;
-      setIsLoading(true);
-      const fetchOptions = async () => {
-        try {
-          const results = await fetchFn(
-            searchTextTrimmed,
-            maxNumberOfPresentedOptions,
-            currentSelectedValues,
-            abortController.signal
-          );
-          if (abortController.signal.aborted) return;
-          if (results?.length) {
-            updateCachedOptions(results);
-          }
-          let updatedOptions = results || [];
-          if (!searchTextTrimmed) {
-            const unreturnedSelectedValues = currentSelectedValues.filter((v3) => !results?.find((r3) => r3.value === v3)).filter((v3) => !cachedOptions.current[v3]).map((v3) => ({ label: v3, value: v3 }));
-            if (unreturnedSelectedValues.length > 0) {
-              updateCachedOptions(unreturnedSelectedValues);
-              updatedOptions = unreturnedSelectedValues.concat(results || []);
-            }
-          }
-          const options = searchTextTrimmed ? updatedOptions : sortValuesToTop(updatedOptions, currentSelectedValues);
-          setFilteredOptions(getMatchScore(searchTextTrimmed, options, language, false));
-          setIsLoading(false);
-        } catch (error) {
-          if (abortController.signal.aborted) return;
-          setIsLoading(false);
-          throw error;
-        }
-      };
-      if (debounceTime > 0) {
-        debounceTimerRef.current = setTimeout(fetchOptions, debounceTime);
-      } else {
-        fetchOptions();
-      }
-      return () => {
-        abortController.abort();
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-      };
-    } else {
-      const arrayOptions = (
-        /** @type {Option[]} */
-        allowedOptions
-      );
-      const currentSelectedValues = selectedValues;
-      const mergedOptions = currentSelectedValues.filter((v3) => !resolvedOptionsLookup[v3]).map((v3) => ({ label: v3, value: v3 })).concat(arrayOptions);
-      const options = searchText ? mergedOptions : sortValuesToTop(mergedOptions, currentSelectedValues);
-      setFilteredOptions(
-        getMatchScore(searchText, options, language, true).slice(0, maxNumberOfPresentedOptions)
-      );
-    }
-  }, [
-    isOpen,
-    searchTextTrimmed,
-    searchText,
-    language,
-    unresolvedValues.length > 0,
-    // selectValues doesn't need to be a dependency as explained above
-    isFunction,
-    allowedOptions,
-    // resolvedOptionsLookup doesn't need to be dependency as explained above
-    maxNumberOfPresentedOptions,
-    updateCachedOptions
-  ]);
-  return {
-    filteredOptions,
-    resolvedOptionsLookup,
-    isLoading
-  };
-}
 
 // lib/TraySearchList.jsx
 var TraySearchList = ({
@@ -3117,7 +2607,7 @@ var TraySearchList = ({
       "div",
       {
         ref: trayModalRef,
-        className: `PreactCombobox-modal ${`PreactCombobox--${theme}`}`,
+        className: `PreactDatefield-modal ${`PreactDatefield--${theme}`}`,
         style: { display: isOpen ? null : "none" },
         onClick: (e3) => {
           if (e3.target === trayModalRef.current) {
@@ -3133,13 +2623,13 @@ var TraySearchList = ({
         "aria-modal": "true",
         "aria-labelledby": trayLabel ? `${id}-tray-label` : void 0,
         tabIndex: -1,
-        children: /* @__PURE__ */ u3("div", { className: `PreactCombobox-tray ${`PreactCombobox--${theme}`}`, children: [
-          /* @__PURE__ */ u3("div", { className: "PreactCombobox-trayHeader", children: [
+        children: /* @__PURE__ */ u3("div", { className: `PreactDatefield-tray ${`PreactDatefield--${theme}`}`, children: [
+          /* @__PURE__ */ u3("div", { className: "PreactDatefield-trayHeader", children: [
             trayLabel && /* @__PURE__ */ u3(
               "label",
               {
                 id: `${id}-tray-label`,
-                className: "PreactCombobox-trayLabel",
+                className: "PreactDatefield-trayLabel",
                 htmlFor: `${id}-tray-input`,
                 children: trayLabel
               }
@@ -3158,7 +2648,7 @@ var TraySearchList = ({
                     handleClose();
                   }
                 },
-                className: `PreactCombobox-trayInput ${!trayLabel ? "PreactCombobox-trayInput--noLabel" : ""}`,
+                className: `PreactDatefield-trayInput ${!trayLabel ? "PreactDatefield-trayInput--noLabel" : ""}`,
                 role: "combobox",
                 "aria-expanded": "true",
                 "aria-haspopup": "listbox",
@@ -3179,7 +2669,7 @@ var TraySearchList = ({
           virtualKeyboardHeight > 0 && /* @__PURE__ */ u3(
             "div",
             {
-              className: "PreactCombobox-virtualKeyboardSpacer",
+              className: "PreactDatefield-virtualKeyboardSpacer",
               style: { height: `${virtualKeyboardHeight}px` },
               "aria-hidden": "true"
             }
@@ -3191,34 +2681,705 @@ var TraySearchList = ({
 };
 var TraySearchList_default = TraySearchList;
 
-// lib/PreactCombobox.jsx
-var defaultEnglishTranslations = {
-  searchPlaceholder: "Search...",
-  noOptionsFound: "No options found",
-  loadingOptions: "Loading...",
-  loadingOptionsAnnouncement: "Loading options, please wait...",
-  optionsLoadedAnnouncement: "Options loaded.",
-  noOptionsFoundAnnouncement: "No options found.",
-  addOption: 'Add "{value}"',
-  typeToLoadMore: "...type to load more options",
-  clearValue: "Clear value",
-  selectedOption: "Selected option.",
-  invalidOption: "Invalid option.",
-  invalidValues: "Invalid values:",
-  fieldContainsInvalidValues: "Field contains invalid values",
-  noOptionsSelected: "No options selected",
-  selectionAdded: "added selection",
-  selectionRemoved: "removed selection",
-  selectionsCurrent: "currently selected",
-  selectionsMore: "and {count} more option",
-  selectionsMorePlural: "and {count} more options",
-  // Function to format the count in badge, receives count and language as parameters
-  selectedCountFormatter: (count, lang) => new Intl.NumberFormat(lang).format(count)
-};
-var isServerDefault = typeof self === "undefined";
-function unique(arr) {
-  return Array.from(new Set(arr));
+// lib/dateParser.js
+var MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december"
+];
+var MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+var MONTH_SHORT_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+var timeZoneFormatterCache = /* @__PURE__ */ new Map();
+function normalizeInput(input) {
+  return input.toLowerCase().replace(/[,]+/g, " ").replace(/\s+/g, " ").trim();
 }
+function normalizeToken(token) {
+  return token.toLowerCase().replace(/,/g, "").replace(/^[.]+|[.]+$/g, "");
+}
+function toInt(token) {
+  if (!/^\d+$/.test(token)) return null;
+  const value = Number(token);
+  return Number.isNaN(value) ? null : value;
+}
+function pad(value, size = 2) {
+  return String(value).padStart(size, "0");
+}
+function isValidDate(year, month, day) {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+function monthMatches(token) {
+  if (!token || !/^[a-z]+$/.test(token)) return [];
+  const out = [];
+  for (let i4 = 0; i4 < MONTH_KEYS.length; i4 += 1) {
+    const full = MONTH_KEYS[i4] || "";
+    const short = MONTH_SHORT_KEYS[i4] || "";
+    if (full.startsWith(token) || short.startsWith(token)) {
+      out.push({ month: i4 + 1, partial: token !== full && token !== short });
+    }
+  }
+  return out;
+}
+function parseMeridiem(token) {
+  const normalized = normalizeToken(token);
+  if (normalized === "a" || normalized === "am") return "am";
+  if (normalized === "p" || normalized === "pm") return "pm";
+  return null;
+}
+function resolveDateOrder(dateOrder, locale) {
+  if (dateOrder && dateOrder !== "auto") return dateOrder;
+  const parts = new Intl.DateTimeFormat(locale || "en-US").formatToParts(new Date(Date.UTC(2006, 0, 2))).filter((part) => part.type === "year" || part.type === "month" || part.type === "day").map((part) => part.type);
+  const joined = parts.join("-");
+  if (joined === "day-month-year") return "DMY";
+  if (joined === "year-month-day") return "YMD";
+  return "MDY";
+}
+function getPairMonthDay(first, second, resolvedOrder) {
+  if (first < 1 || second < 1 || first > 31 || second > 31) return [];
+  if (first > 12 && second > 12) return [];
+  if (first > 12) return [{ month: second, day: first, ambiguousOrder: false, orderPenalty: 0 }];
+  if (second > 12) return [{ month: first, day: second, ambiguousOrder: false, orderPenalty: 0 }];
+  const order2 = resolvedOrder === "DMY" ? "DMY" : "MDY";
+  if (order2 === "DMY") {
+    return [
+      { month: second, day: first, ambiguousOrder: true, orderPenalty: 0 },
+      { month: first, day: second, ambiguousOrder: true, orderPenalty: 1 }
+    ];
+  }
+  return [
+    { month: first, day: second, ambiguousOrder: true, orderPenalty: 0 },
+    { month: second, day: first, ambiguousOrder: true, orderPenalty: 1 }
+  ];
+}
+function parseTimeFields(hourRaw, minuteRaw, secondRaw, millisecondRaw, meridiem, allowSeconds, allowMilliseconds) {
+  const hourBase = Number(hourRaw);
+  const minute = minuteRaw ? Number(minuteRaw) : 0;
+  const second = secondRaw ? Number(secondRaw) : 0;
+  const millisecond = millisecondRaw ? Number(millisecondRaw.padEnd(3, "0").slice(0, 3)) : 0;
+  if ([hourBase, minute, second, millisecond].some((value) => Number.isNaN(value))) return [];
+  if (minute < 0 || minute > 59) return [];
+  if (second < 0 || second > 59) return [];
+  if (millisecond < 0 || millisecond > 999) return [];
+  if (!allowSeconds && secondRaw) return [];
+  if (!allowMilliseconds && millisecondRaw) return [];
+  if (millisecondRaw && !secondRaw && !allowSeconds) return [];
+  const hadSeconds = Boolean(secondRaw);
+  const hadMilliseconds = Boolean(millisecondRaw);
+  if (meridiem) {
+    if (hourBase < 1 || hourBase > 12) return [];
+    const hour = meridiem === "pm" ? hourBase % 12 + 12 : hourBase % 12;
+    return [{ hour, minute, second, millisecond, assumedMeridiem: false, hadSeconds, hadMilliseconds }];
+  }
+  if (hourBase < 0 || hourBase > 23) return [];
+  if (hourBase >= 13 || hourBase === 0) {
+    return [{ hour: hourBase, minute, second, millisecond, assumedMeridiem: false, hadSeconds, hadMilliseconds }];
+  }
+  return [
+    { hour: hourBase % 12, minute, second, millisecond, assumedMeridiem: true, hadSeconds, hadMilliseconds },
+    { hour: hourBase % 12 + 12, minute, second, millisecond, assumedMeridiem: true, hadSeconds, hadMilliseconds }
+  ];
+}
+function parseTimeCandidates(tokens, allowSeconds, allowMilliseconds) {
+  const out = [];
+  const consumed = /* @__PURE__ */ new Set();
+  for (let i4 = 0; i4 < tokens.length; i4 += 1) {
+    if (consumed.has(i4)) continue;
+    const token = normalizeToken(tokens[i4] || "");
+    if (!token) continue;
+    let match = token.match(/^(\d{1,2})(?::(\d{1,2})(?::(\d{1,2})(?:[:.](\d{1,3}))?)?)?(a|am|p|pm)$/);
+    if (match) {
+      const meridiem = match[5] === "a" || match[5] === "am" ? "am" : "pm";
+      const parsed2 = parseTimeFields(
+        match[1] || "",
+        match[2],
+        match[3],
+        match[4],
+        meridiem,
+        allowSeconds,
+        allowMilliseconds
+      );
+      if (parsed2.length) {
+        consumed.add(i4);
+        for (const item of parsed2) out.push({ ...item, usedIndices: /* @__PURE__ */ new Set([i4]) });
+      }
+      continue;
+    }
+    const nextMeridiem = i4 + 1 < tokens.length ? parseMeridiem(tokens[i4 + 1] || "") : null;
+    match = token.match(/^(\d{1,2})(?::(\d{1,2})(?::(\d{1,2})(?:[:.](\d{1,3}))?)?)?$/);
+    if (match && nextMeridiem) {
+      const parsed2 = parseTimeFields(
+        match[1] || "",
+        match[2],
+        match[3],
+        match[4],
+        nextMeridiem,
+        allowSeconds,
+        allowMilliseconds
+      );
+      if (parsed2.length) {
+        consumed.add(i4);
+        consumed.add(i4 + 1);
+        for (const item of parsed2) out.push({ ...item, usedIndices: /* @__PURE__ */ new Set([i4, i4 + 1]) });
+      }
+      continue;
+    }
+    match = token.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2})(?:[:.](\d{1,3}))?)?$/);
+    if (!match) continue;
+    const parsed = parseTimeFields(
+      match[1] || "",
+      match[2],
+      match[3],
+      match[4],
+      null,
+      allowSeconds,
+      allowMilliseconds
+    );
+    if (!parsed.length) continue;
+    consumed.add(i4);
+    for (const item of parsed) out.push({ ...item, usedIndices: /* @__PURE__ */ new Set([i4]) });
+  }
+  return out;
+}
+function buildYearOnlyDate(year, favor) {
+  if (favor === "end") return { month: 12, day: 31, boundary: "endOfYear" };
+  return { month: 1, day: 1, boundary: "startOfYear" };
+}
+function addDateCandidate(list, year, month, day, usedIndices, explicitYear, explicitMonth, explicitDay, ambiguousOrder, orderPenalty, partialMonth, boundary) {
+  if (!isValidDate(year, month, day)) return;
+  list.push({
+    year,
+    month,
+    day,
+    usedIndices,
+    explicitYear,
+    explicitMonth,
+    explicitDay,
+    ambiguousOrder,
+    orderPenalty,
+    partialMonth,
+    boundary
+  });
+}
+function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, favor) {
+  const out = [];
+  const separated = [];
+  const monthWordTokens = [];
+  const numericTokens = [];
+  for (let i4 = 0; i4 < tokens.length; i4 += 1) {
+    if (consumedTimeIndices.has(i4)) continue;
+    const token = normalizeToken(tokens[i4] || "");
+    if (!token) continue;
+    const separatedMatch = token.match(/^(\d{1,4})[\/.-](\d{1,2})(?:[\/.-](\d{1,4}))?$/);
+    if (separatedMatch) {
+      separated.push({
+        index: i4,
+        a: Number(separatedMatch[1]),
+        b: Number(separatedMatch[2]),
+        c: separatedMatch[3] ? Number(separatedMatch[3]) : null
+      });
+      continue;
+    }
+    const months = monthMatches(token);
+    if (months.length) {
+      monthWordTokens.push({ index: i4, months });
+      continue;
+    }
+    const numeric = toInt(token);
+    if (numeric !== null) numericTokens.push({ index: i4, value: numeric });
+  }
+  for (const item of separated) {
+    const { a: a3, b: b2, c: c3, index } = item;
+    if (c3 !== null) {
+      if (a3 >= 1e3 && a3 <= 9999) {
+        addDateCandidate(
+          out,
+          a3,
+          b2,
+          c3,
+          /* @__PURE__ */ new Set([index]),
+          true,
+          true,
+          true,
+          false,
+          0,
+          false,
+          "none"
+        );
+        continue;
+      }
+      if (c3 >= 1e3 && c3 <= 9999) {
+        const pairs2 = getPairMonthDay(a3, b2, resolvedOrder);
+        for (const pair of pairs2) {
+          addDateCandidate(
+            out,
+            c3,
+            pair.month,
+            pair.day,
+            /* @__PURE__ */ new Set([index]),
+            true,
+            true,
+            true,
+            pair.ambiguousOrder,
+            pair.orderPenalty,
+            false,
+            "none"
+          );
+        }
+      }
+      continue;
+    }
+    const pairs = getPairMonthDay(a3, b2, resolvedOrder);
+    for (const pair of pairs) {
+      addDateCandidate(
+        out,
+        now.getFullYear(),
+        pair.month,
+        pair.day,
+        /* @__PURE__ */ new Set([index]),
+        false,
+        true,
+        true,
+        pair.ambiguousOrder,
+        pair.orderPenalty,
+        false,
+        "none"
+      );
+    }
+  }
+  const dayNumbers = numericTokens.filter((token) => token.value >= 1 && token.value <= 31);
+  const yearNumbers = numericTokens.filter((token) => token.value >= 1e3 && token.value <= 9999);
+  if (monthWordTokens.length && dayNumbers.length) {
+    for (const monthToken of monthWordTokens) {
+      for (const monthItem of monthToken.months) {
+        for (const dayToken of dayNumbers) {
+          if (yearNumbers.length) {
+            for (const yearToken of yearNumbers) {
+              addDateCandidate(
+                out,
+                yearToken.value,
+                monthItem.month,
+                dayToken.value,
+                /* @__PURE__ */ new Set([monthToken.index, dayToken.index, yearToken.index]),
+                true,
+                true,
+                true,
+                false,
+                0,
+                monthItem.partial,
+                "none"
+              );
+            }
+            continue;
+          }
+          addDateCandidate(
+            out,
+            now.getFullYear(),
+            monthItem.month,
+            dayToken.value,
+            /* @__PURE__ */ new Set([monthToken.index, dayToken.index]),
+            false,
+            true,
+            true,
+            false,
+            0,
+            monthItem.partial,
+            "none"
+          );
+        }
+      }
+    }
+  }
+  if (!monthWordTokens.length && !separated.length) {
+    const yearOnly = yearNumbers.length === 1 ? yearNumbers[0] : null;
+    if (yearOnly && dayNumbers.length === 0 && numericTokens.length === 1) {
+      const boundaryDate = buildYearOnlyDate(yearOnly.value, favor);
+      addDateCandidate(
+        out,
+        yearOnly.value,
+        boundaryDate.month,
+        boundaryDate.day,
+        /* @__PURE__ */ new Set([yearOnly.index]),
+        true,
+        false,
+        false,
+        false,
+        0,
+        false,
+        boundaryDate.boundary
+      );
+    }
+    const nonYear = numericTokens.filter((token) => token.value < 1e3);
+    if (nonYear.length >= 2) {
+      const first = nonYear[0];
+      const second = nonYear[1];
+      const firstYear = yearNumbers[0] || null;
+      if (first && second) {
+        const inferredYear = firstYear ? firstYear.value : now.getFullYear();
+        const pairs = getPairMonthDay(first.value, second.value, resolvedOrder);
+        for (const pair of pairs) {
+          addDateCandidate(
+            out,
+            inferredYear,
+            pair.month,
+            pair.day,
+            /* @__PURE__ */ new Set([first.index, second.index, ...firstYear ? [firstYear.index] : []]),
+            Boolean(firstYear),
+            true,
+            true,
+            pair.ambiguousOrder,
+            pair.orderPenalty,
+            false,
+            "none"
+          );
+        }
+      }
+    }
+    if (dayNumbers.length) {
+      const firstDay = dayNumbers[0];
+      const firstYear = yearNumbers[0] || null;
+      if (firstDay) {
+        addDateCandidate(
+          out,
+          firstYear ? firstYear.value : now.getFullYear(),
+          now.getMonth() + 1,
+          firstDay.value,
+          /* @__PURE__ */ new Set([firstDay.index, ...firstYear ? [firstYear.index] : []]),
+          Boolean(firstYear),
+          false,
+          true,
+          false,
+          0,
+          false,
+          "none"
+        );
+      }
+    }
+  }
+  return out;
+}
+function scoreCandidate(candidate, explicitTime, assumedMeridiem, ignoredTokenCount, mode) {
+  let score = 100;
+  score += candidate.explicitYear ? 9 : -9;
+  score += candidate.explicitMonth ? 8 : -8;
+  score += candidate.explicitDay ? 8 : -8;
+  if (explicitTime) score += 12;
+  if (mode === "datetime" && !explicitTime) score -= 4;
+  if (candidate.ambiguousOrder) score -= 3;
+  score -= candidate.orderPenalty * 2;
+  if (candidate.partialMonth) score -= 2;
+  if (assumedMeridiem) score -= 2;
+  if (candidate.boundary !== "none") score -= 2;
+  score -= ignoredTokenCount * 2;
+  return score;
+}
+function toTimeLabel(hour, minute, second, millisecond, includeSeconds, includeMilliseconds) {
+  const meridiem = hour >= 12 ? "PM" : "AM";
+  const clockHour = hour % 12 || 12;
+  let text = `${clockHour}:${pad(minute)} ${meridiem}`;
+  if (includeSeconds) text = `${clockHour}:${pad(minute)}:${pad(second)} ${meridiem}`;
+  if (includeMilliseconds) text = `${clockHour}:${pad(minute)}:${pad(second)}.${pad(millisecond, 3)} ${meridiem}`;
+  return text;
+}
+function toDateLabel(year, month, day) {
+  const monthName = MONTH_SHORT[month - 1] || MONTH_SHORT[0];
+  return `${monthName} ${day}, ${year}`;
+}
+function toDateValue(year, month, day) {
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+function getTimeZoneFormatter(timezone) {
+  const cached = timeZoneFormatterCache.get(timezone);
+  if (cached) return cached;
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    calendar: "iso8601",
+    numberingSystem: "latn",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+  timeZoneFormatterCache.set(timezone, formatter);
+  return formatter;
+}
+function getZonedParts(epochMs, timezone) {
+  const formatter = getTimeZoneFormatter(timezone);
+  const parts = {};
+  for (const part of formatter.formatToParts(new Date(epochMs))) {
+    if (part.type === "year") parts.year = Number(part.value);
+    else if (part.type === "month") parts.month = Number(part.value);
+    else if (part.type === "day") parts.day = Number(part.value);
+    else if (part.type === "hour") parts.hour = Number(part.value);
+    else if (part.type === "minute") parts.minute = Number(part.value);
+    else if (part.type === "second") parts.second = Number(part.value);
+  }
+  return {
+    year: parts.year || 0,
+    month: parts.month || 0,
+    day: parts.day || 0,
+    hour: parts.hour || 0,
+    minute: parts.minute || 0,
+    second: parts.second || 0
+  };
+}
+function getOffsetMs(epochMs, timezone) {
+  const baseMs = Math.trunc(epochMs / 1e3) * 1e3;
+  const parts = getZonedParts(baseMs, timezone);
+  const asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  return asUTC - baseMs;
+}
+function zonedDateTimeToUTCISOString(year, month, day, hour, minute, second, millisecond, timezone) {
+  const desiredLocalAsUTC = Date.UTC(year, month - 1, day, hour, minute, second, 0);
+  let guess = desiredLocalAsUTC;
+  for (let i4 = 0; i4 < 3; i4 += 1) {
+    const next = desiredLocalAsUTC - getOffsetMs(guess, timezone);
+    if (next === guess) break;
+    guess = next;
+  }
+  const finalEpoch = guess + millisecond;
+  const resolved = getZonedParts(finalEpoch, timezone);
+  const isExact = resolved.year === year && resolved.month === month && resolved.day === day && resolved.hour === hour && resolved.minute === minute && resolved.second === second;
+  if (!isExact) return null;
+  return new Date(finalEpoch).toISOString();
+}
+function toDateTimeValue(year, month, day, hour, minute, second, millisecond, timezone) {
+  try {
+    const iso = zonedDateTimeToUTCISOString(year, month, day, hour, minute, second, millisecond, timezone);
+    if (iso) return iso;
+  } catch (_error) {
+  }
+  return new Date(Date.UTC(year, month - 1, day, hour, minute, second, millisecond)).toISOString();
+}
+function buildDateSuggestions(input, options = {}) {
+  const normalizedInput = normalizeInput(input || "");
+  if (!normalizedInput) return [];
+  const mode = options.mode || "date";
+  const favor = options.favor || "start";
+  const now = options.now || /* @__PURE__ */ new Date();
+  const timezone = options.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const resolvedOrder = resolveDateOrder(options.dateOrder || "auto", options.locale || "en-US");
+  const allowSeconds = Boolean(options.allowSeconds);
+  const allowMilliseconds = Boolean(options.allowMilliseconds);
+  const maxOptions = Math.max(1, options.maxOptions || 10);
+  const tokens = normalizedInput.split(" ").filter(Boolean);
+  const timeCandidates = parseTimeCandidates(tokens, allowSeconds, allowMilliseconds);
+  const consumedTimeIndices = /* @__PURE__ */ new Set();
+  for (const time of timeCandidates) for (const index of time.usedIndices) consumedTimeIndices.add(index);
+  let dateCandidates = parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, favor);
+  if (!dateCandidates.length && mode === "datetime" && timeCandidates.length) {
+    dateCandidates = [
+      {
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+        usedIndices: /* @__PURE__ */ new Set(),
+        explicitYear: false,
+        explicitMonth: false,
+        explicitDay: false,
+        ambiguousOrder: false,
+        orderPenalty: 0,
+        partialMonth: false,
+        boundary: "none"
+      }
+    ];
+  }
+  if (!dateCandidates.length) return [];
+  const suggestions = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const dateCandidate of dateCandidates) {
+    if (mode === "date") {
+      const usedIndices2 = new Set(dateCandidate.usedIndices);
+      const ignoredTokenCount2 = Math.max(0, tokens.length - usedIndices2.size);
+      const score2 = scoreCandidate(dateCandidate, false, false, ignoredTokenCount2, mode);
+      const value2 = toDateValue(dateCandidate.year, dateCandidate.month, dateCandidate.day);
+      if (seen.has(value2)) continue;
+      seen.add(value2);
+      suggestions.push({
+        label: toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day),
+        value: value2,
+        score: score2,
+        timezone,
+        mode,
+        inferredBoundary: "none",
+        inferredYear: !dateCandidate.explicitYear,
+        inferredMonth: !dateCandidate.explicitMonth,
+        inferredDay: !dateCandidate.explicitDay,
+        inferredTime: true,
+        year: dateCandidate.year,
+        month: dateCandidate.month,
+        day: dateCandidate.day,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0
+      });
+      continue;
+    }
+    if (timeCandidates.length) {
+      for (const timeCandidate of timeCandidates) {
+        const usedIndices2 = /* @__PURE__ */ new Set([...dateCandidate.usedIndices, ...timeCandidate.usedIndices]);
+        const ignoredTokenCount2 = Math.max(0, tokens.length - usedIndices2.size);
+        const score2 = scoreCandidate(
+          dateCandidate,
+          true,
+          timeCandidate.assumedMeridiem,
+          ignoredTokenCount2,
+          mode
+        );
+        const value2 = toDateTimeValue(
+          dateCandidate.year,
+          dateCandidate.month,
+          dateCandidate.day,
+          timeCandidate.hour,
+          timeCandidate.minute,
+          timeCandidate.second,
+          timeCandidate.millisecond,
+          timezone
+        );
+        if (seen.has(value2)) continue;
+        seen.add(value2);
+        const label2 = `${toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day)} - ${toTimeLabel(
+          timeCandidate.hour,
+          timeCandidate.minute,
+          timeCandidate.second,
+          timeCandidate.millisecond,
+          timeCandidate.hadSeconds,
+          timeCandidate.hadMilliseconds
+        )} (${timezone})`;
+        suggestions.push({
+          label: label2,
+          value: value2,
+          score: score2,
+          timezone,
+          mode,
+          inferredBoundary: "none",
+          inferredYear: !dateCandidate.explicitYear,
+          inferredMonth: !dateCandidate.explicitMonth,
+          inferredDay: !dateCandidate.explicitDay,
+          inferredTime: false,
+          year: dateCandidate.year,
+          month: dateCandidate.month,
+          day: dateCandidate.day,
+          hour: timeCandidate.hour,
+          minute: timeCandidate.minute,
+          second: timeCandidate.second,
+          millisecond: timeCandidate.millisecond
+        });
+      }
+      continue;
+    }
+    const isEnd = dateCandidate.boundary === "endOfDay" || dateCandidate.boundary === "endOfYear" || favor === "end";
+    const isYearBoundary = dateCandidate.boundary === "startOfYear" || dateCandidate.boundary === "endOfYear";
+    const hour = isEnd ? 23 : 0;
+    const minute = isEnd ? 59 : 0;
+    const second = isEnd ? 59 : 0;
+    const millisecond = isEnd ? 999 : 0;
+    const inferredBoundary = dateCandidate.boundary === "none" ? isEnd ? "endOfDay" : "startOfDay" : dateCandidate.boundary;
+    const usedIndices = new Set(dateCandidate.usedIndices);
+    const ignoredTokenCount = Math.max(0, tokens.length - usedIndices.size);
+    const score = scoreCandidate(dateCandidate, false, false, ignoredTokenCount, mode);
+    const value = toDateTimeValue(
+      dateCandidate.year,
+      dateCandidate.month,
+      dateCandidate.day,
+      hour,
+      minute,
+      second,
+      millisecond,
+      timezone
+    );
+    if (seen.has(value)) continue;
+    seen.add(value);
+    const boundaryLabel = inferredBoundary === "startOfDay" ? "start of day" : inferredBoundary === "endOfDay" ? "end of day" : inferredBoundary === "startOfYear" ? "start of year" : "end of year";
+    const label = `${toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day)} - ${boundaryLabel} (${timezone})`;
+    suggestions.push({
+      label,
+      value,
+      score: isYearBoundary ? score + 1 : score,
+      timezone,
+      mode,
+      inferredBoundary,
+      inferredYear: !dateCandidate.explicitYear,
+      inferredMonth: !dateCandidate.explicitMonth,
+      inferredDay: !dateCandidate.explicitDay,
+      inferredTime: true,
+      year: dateCandidate.year,
+      month: dateCandidate.month,
+      day: dateCandidate.day,
+      hour,
+      minute,
+      second,
+      millisecond
+    });
+  }
+  suggestions.sort(
+    (a3, b2) => b2.score - a3.score || a3.year - b2.year || a3.month - b2.month || a3.day - b2.day || a3.hour - b2.hour || a3.minute - b2.minute || a3.second - b2.second || a3.millisecond - b2.millisecond || a3.label.localeCompare(b2.label)
+  );
+  return suggestions.slice(0, maxOptions);
+}
+function isoToDisplayLabel(value, options = {}) {
+  if (!value) return "";
+  const mode = options.mode || "date";
+  const timezone = options.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const allowSeconds = Boolean(options.allowSeconds);
+  const allowMilliseconds = Boolean(options.allowMilliseconds);
+  try {
+    if (mode === "date") {
+      const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return "";
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const day = Number(match[3]);
+      if (!isValidDate(year, month, day)) return "";
+      const parts2 = { year, month, day, hour: 0, minute: 0, second: 0, millisecond: 0, timezone, mode };
+      if (options.labelFormatter) return options.labelFormatter(parts2);
+      return toDateLabel(year, month, day);
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const zonedParts = getZonedParts(date.getTime(), timezone);
+    const ms = date.getTime() % 1e3;
+    const parts = {
+      year: zonedParts.year,
+      month: zonedParts.month,
+      day: zonedParts.day,
+      hour: zonedParts.hour,
+      minute: zonedParts.minute,
+      second: zonedParts.second,
+      millisecond: ms,
+      timezone,
+      mode
+    };
+    if (options.labelFormatter) return options.labelFormatter(parts);
+    const dateStr = toDateLabel(zonedParts.year, zonedParts.month, zonedParts.day);
+    const includeSeconds = allowSeconds && (zonedParts.second !== 0 || ms !== 0);
+    const includeMs = allowMilliseconds && ms !== 0;
+    const timeStr = toTimeLabel(zonedParts.hour, zonedParts.minute, zonedParts.second, ms, includeSeconds, includeMs);
+    return `${dateStr} - ${timeStr} (${timezone})`;
+  } catch (_error) {
+    return "";
+  }
+}
+
+// lib/PreactDatefield.jsx
+var defaultTranslations = {
+  searchPlaceholder: "Type a date...",
+  noOptionsFound: "No dates found",
+  clearValue: "Clear date"
+};
 var Portal = ({ parent = document.body, children, rootElementRef }) => {
   const [dir, setDir] = h2(
     /** @type {string|null} */
@@ -3247,7 +3408,6 @@ var dropdownPopperModifiers = [
     enabled: true
   },
   {
-    // make the popper width same as root element
     name: "referenceElementWidth",
     enabled: true,
     phase: "beforeWrite",
@@ -3270,48 +3430,10 @@ var dropdownPopperModifiers = [
     }
   }
 ];
-var tooltipPopperModifiers = [
-  {
-    name: "offset",
-    options: {
-      offset: [0, 2]
-    }
-  },
-  {
-    name: "eventListeners",
-    enabled: true,
-    options: {
-      scroll: true,
-      resize: true
-    }
-  }
-];
-var defaultWarningIcon = /* @__PURE__ */ u3(
-  "svg",
-  {
-    className: "PreactCombobox-warningIcon",
-    viewBox: "0 0 24 24",
-    width: "24",
-    height: "24",
-    "aria-hidden": "true",
-    children: /* @__PURE__ */ u3("path", { d: "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" })
-  }
-);
-var defaultTickIcon = /* @__PURE__ */ u3(
-  "svg",
-  {
-    className: "PreactCombobox-tickIcon",
-    viewBox: "0 0 24 24",
-    width: "14",
-    height: "14",
-    "aria-hidden": "true",
-    children: /* @__PURE__ */ u3("path", { d: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z", fill: "currentColor" })
-  }
-);
 var defaultChevronIcon = /* @__PURE__ */ u3(
   "svg",
   {
-    className: "PreactCombobox-chevron",
+    className: "PreactDatefield-chevron",
     viewBox: "0 0 24 24",
     width: "24",
     height: "24",
@@ -3319,140 +3441,59 @@ var defaultChevronIcon = /* @__PURE__ */ u3(
     children: /* @__PURE__ */ u3("path", { d: "M7 10l5 5 5-5z" })
   }
 );
-var defaultLoadingRenderer = (loadingText) => loadingText;
-function defaultOptionRenderer({
-  option,
-  isSelected,
-  isInvalid,
-  showValue,
-  warningIcon,
-  tickIcon,
-  optionIconRenderer
-}) {
-  const isLabelSameAsValue = option.value === option.label;
-  const getLabel = (labelNodes, valueNodes) => /* @__PURE__ */ u3(k, { children: [
-    optionIconRenderer?.(option, false),
-    /* @__PURE__ */ u3("span", { className: "PreactCombobox-optionLabelFlex", children: [
-      /* @__PURE__ */ u3("span", { children: labelNodes }),
-      isLabelSameAsValue || !showValue ? null : /* @__PURE__ */ u3("span", { className: "PreactCombobox-optionValue", "aria-hidden": "true", children: [
-        "(",
-        valueNodes,
-        ")"
-      ] })
-    ] })
-  ] });
-  const { label, value, matched, matchSlices } = option;
-  let labelElement;
-  if (matched === "label" || matched === "value" && value === label) {
-    const labelNodes = matchSlicesToNodes(matchSlices, label);
-    labelElement = getLabel(labelNodes, [value]);
-  } else if (matched === "value") {
-    const valueNodes = matchSlicesToNodes(matchSlices, value);
-    labelElement = getLabel([label], valueNodes);
-  } else {
-    labelElement = getLabel([label], [value]);
-  }
-  return /* @__PURE__ */ u3(k, { children: [
-    /* @__PURE__ */ u3(
-      "span",
-      {
-        className: `PreactCombobox-optionCheckbox ${isSelected ? "PreactCombobox-optionCheckbox--selected" : ""}`,
-        children: isSelected && tickIcon
-      }
+function suggestionsToOptions(suggestions) {
+  return suggestions.map((s3) => ({
+    label: s3.label,
+    value: s3.value,
+    score: s3.score,
+    matched: (
+      /** @type {const} */
+      "label"
     ),
-    labelElement,
-    isInvalid && warningIcon
-  ] });
+    matchSlices: []
+  }));
 }
-function defaultOptionIconRenderer(option) {
-  return option.icon ? /* @__PURE__ */ u3("span", { className: "PreactCombobox-optionIcon", "aria-hidden": "true", role: "img", children: option.icon }) : null;
-}
-var defaultArrayValue = [];
-function formatSelectionAnnouncement(selectedValues, diff, optionsLookup, language, translations) {
-  if (!selectedValues || selectedValues.length === 0) {
-    return translations.noOptionsSelected;
-  }
-  const labels = selectedValues.map((value) => optionsLookup[value]?.label || value);
-  const prefix = diff ? diff === "added" ? translations.selectionAdded : translations.selectionRemoved : translations.selectionsCurrent;
-  if (selectedValues.length <= 3) {
-    return `${prefix} ${new Intl.ListFormat(language, { style: "long", type: "conjunction" }).format(labels)}`;
-  }
-  const firstThree = labels.slice(0, 3);
-  const remaining = selectedValues.length - 3;
-  const moreText = remaining === 1 ? translations.selectionsMore.replace("{count}", remaining.toString()) : translations.selectionsMorePlural.replace("{count}", remaining.toString());
-  return `${prefix} ${firstThree.join(", ")} ${moreText}`;
-}
-var PreactCombobox = ({
+var PreactDatefield = ({
   id: idProp,
-  multiple = true,
-  allowedOptions,
-  allowFreeText = false,
-  onChange,
-  value = multiple ? defaultArrayValue : "",
-  language = "en",
-  placeholder = "",
-  disabled,
-  required,
   name,
-  portal = document.body,
   className = "",
-  rootElementProps,
-  inputProps: { tooltipContent = null, ...inputProps } = {},
+  value,
+  onChange,
+  onBlur: onBlurProp,
+  mode = "date",
+  favor = "start",
+  timezone: timezoneProp,
+  dateOrder = "auto",
+  locale = "en-US",
+  allowSeconds = false,
+  allowMilliseconds = false,
+  labelFormatter,
+  placeholder = "",
+  required = false,
+  disabled = false,
   formSubmitCompatible = false,
-  isServer = isServerDefault,
-  selectElementProps,
-  showValue = true,
-  showClearButton = true,
-  optionRenderer = defaultOptionRenderer,
-  optionIconRenderer = defaultOptionIconRenderer,
-  warningIcon = defaultWarningIcon,
-  tickIcon = defaultTickIcon,
-  chevronIcon = defaultChevronIcon,
-  loadingRenderer = defaultLoadingRenderer,
   theme = "system",
   tray = "auto",
   trayBreakpoint = "768px",
   trayLabel: trayLabelProp,
-  translations = defaultEnglishTranslations,
-  // private option for now
-  maxPresentedOptions = 100
+  showClearButton = true,
+  portal = document.body,
+  rootElementProps,
+  inputProps = {},
+  maxSuggestions = 10
 }) => {
-  const mergedTranslations = useDeepMemo(
-    translations === defaultEnglishTranslations ? translations : { ...defaultEnglishTranslations, ...translations }
-  );
-  const values = multiple ? (
-    /** @type {string[]} */
-    value
-  ) : null;
-  const singleSelectValue = multiple ? null : (
-    /** @type {string} */
-    value
-  );
-  let tempArrayValue;
-  if (Array.isArray(value)) {
-    tempArrayValue = /** @type {string[]} */
-    value;
-  } else {
-    tempArrayValue = value ? [
-      /** @type {string} */
-      value
-    ] : [];
-  }
-  const arrayValues = useDeepMemo(tempArrayValue);
-  const arrayValuesLookup = T2(() => new Set(arrayValues), [arrayValues]);
+  const timezone = timezoneProp || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const autoId = g2();
   const id = idProp || autoId;
   const [inputValue, setInputValue] = h2("");
   const [getIsDropdownOpen, setIsDropdownOpen] = useLive(false);
   const [getIsFocused, setIsFocused] = useLive(false);
-  const [lastSelectionAnnouncement, setLastSelectionAnnouncement] = h2("");
-  const [loadingAnnouncement, setLoadingAnnouncement] = h2("");
+  const [announcement, setAnnouncement] = h2("");
   const optionsListboxRef = A2(
-    /** @type {import("./OptionsListbox.jsx").OptionsListboxRef | null} */
+    /** @type {OptionsListboxRef | null} */
     null
   );
   const [activeDescendantValue, setActiveDescendantValue] = h2("");
-  const [warningIconHovered, setWarningIconHovered] = h2(false);
   const inputRef = A2(
     /** @type {HTMLInputElement | null} */
     null
@@ -3470,17 +3511,11 @@ var PreactCombobox = ({
     null
   );
   const dropdownClosedExplicitlyRef = A2(false);
-  const warningIconRef = A2(null);
-  const tooltipPopperRef = A2(null);
-  const undoStack = A2(
-    /** @type {string[][]} */
-    []
-  );
-  const redoStack = A2(
-    /** @type {string[][]} */
-    []
-  );
   const [getTrayLabel, setTrayLabel] = useLive(trayLabelProp);
+  const previousValidValueRef = A2(value || "");
+  y2(() => {
+    if (value) previousValidValueRef.current = value;
+  }, [value]);
   const [getIsTrayOpen, setIsTrayOpen] = useLive(false);
   const trayClosedExplicitlyRef = A2(false);
   const [isMobileScreen, setIsMobileScreen] = h2(false);
@@ -3496,78 +3531,56 @@ var PreactCombobox = ({
   }, [tray, trayBreakpoint]);
   const shouldUseTray = tray === true || tray === "auto" && isMobileScreen;
   const activeInputValue = getIsTrayOpen() ? trayActiveInputValue : inputValue;
-  const inputTrimmed = activeInputValue.trim();
+  const displayLabel = T2(
+    () => isoToDisplayLabel(value, { mode, timezone, allowSeconds, allowMilliseconds, labelFormatter }),
+    [value, mode, timezone, allowSeconds, allowMilliseconds, labelFormatter]
+  );
+  const parserOptions = T2(
+    () => ({
+      mode,
+      favor,
+      timezone,
+      dateOrder,
+      locale,
+      allowSeconds,
+      allowMilliseconds,
+      maxOptions: maxSuggestions
+    }),
+    [mode, favor, timezone, dateOrder, locale, allowSeconds, allowMilliseconds, maxSuggestions]
+  );
+  const suggestions = T2(
+    () => buildDateSuggestions(activeInputValue, parserOptions),
+    [activeInputValue, parserOptions]
+  );
+  const filteredOptions = T2(() => suggestionsToOptions(suggestions), [suggestions]);
   const computeEffectiveTrayLabel = q2(() => {
     if (trayLabelProp) return trayLabelProp;
-    if (typeof self === "undefined" || isServer || !inputRef.current) return "";
+    if (typeof self === "undefined" || !inputRef.current) return "";
     const inputElement = inputRef.current;
-    const inputId = inputElement.id;
     const ariaLabelledBy = inputElement.getAttribute("aria-labelledby");
     if (ariaLabelledBy) {
       const labelElement = document.getElementById(ariaLabelledBy);
-      if (labelElement) {
-        return labelElement.textContent?.trim() || "";
-      }
+      if (labelElement) return labelElement.textContent?.trim() || "";
     }
     const ariaLabel = inputElement.getAttribute("aria-label");
-    if (ariaLabel) {
-      return ariaLabel.trim();
-    }
-    if (inputId) {
-      const labelElement = document.querySelector(`label[for="${inputId}"]`);
-      if (labelElement) {
-        return labelElement.textContent?.trim() || "";
-      }
+    if (ariaLabel) return ariaLabel.trim();
+    if (inputElement.id) {
+      const labelElement = document.querySelector(`label[for="${inputElement.id}"]`);
+      if (labelElement) return labelElement.textContent?.trim() || "";
     }
     const wrappingLabel = inputElement.closest("label");
-    if (wrappingLabel) {
-      return wrappingLabel.textContent?.trim() || "";
-    }
+    if (wrappingLabel) return wrappingLabel.textContent?.trim() || "";
     const title = inputElement.getAttribute("title");
-    if (title) {
-      return title.trim();
-    }
+    if (title) return title.trim();
     return "";
-  }, [trayLabelProp, isServer]);
+  }, [trayLabelProp]);
   _2(() => {
     setTrayLabel(computeEffectiveTrayLabel());
   }, [setTrayLabel, computeEffectiveTrayLabel]);
   const isListOpen = shouldUseTray ? getIsTrayOpen() : getIsDropdownOpen();
-  const { filteredOptions, resolvedOptionsLookup, isLoading } = useAsyncOptions({
-    allowedOptions,
-    selectedValues: arrayValues,
-    searchText: activeInputValue,
-    isOpen: isListOpen,
-    language,
-    maxNumberOfPresentedOptions: maxPresentedOptions
-  });
-  const allOptionsLookup = resolvedOptionsLookup;
-  const invalidValues = T2(() => {
-    if (allowFreeText) return [];
-    return arrayValues?.filter((v3) => !allOptionsLookup[v3]) || [];
-  }, [allowFreeText, arrayValues, allOptionsLookup]);
-  const updateSelectionAnnouncement = q2(
-    /**
-     * @param {string[]} selectedValues
-     * @param {"added"|"removed"|null} [diff]
-     */
-    (selectedValues, diff) => {
-      const announcement = formatSelectionAnnouncement(
-        selectedValues,
-        diff,
-        allOptionsLookup,
-        language,
-        mergedTranslations
-      );
-      setLastSelectionAnnouncement(announcement);
-    },
-    [allOptionsLookup, mergedTranslations, language]
-  );
   const handleActiveDescendantChange = q2(
-    /** @param {string} value */
-    (value2) => {
-      setActiveDescendantValue(value2);
-    },
+    /** @param {string} val */
+    (val) => setActiveDescendantValue(val),
     []
   );
   const closeDropdown = q2(
@@ -3579,10 +3592,9 @@ var PreactCombobox = ({
       if (closedExplicitly) {
         dropdownClosedExplicitlyRef.current = true;
       }
-      updateSelectionAnnouncement(arrayValues);
       optionsListboxRef.current?.clearActiveDescendant();
     },
-    [setIsDropdownOpen, updateSelectionAnnouncement, arrayValues]
+    [setIsDropdownOpen]
   );
   y2(() => {
     if (getIsDropdownOpen() && !shouldUseTray && rootElementRef.current && dropdownPopperRef.current) {
@@ -3594,81 +3606,30 @@ var PreactCombobox = ({
         modifiers: dropdownPopperModifiers
       });
       dropdownPopperRef.current.style.display = "block";
-      return () => {
-        popperInstance.destroy();
-      };
+      return () => popperInstance.destroy();
     }
     if (shouldUseTray && dropdownPopperRef.current) {
       dropdownPopperRef.current.style.display = "none";
     }
   }, [getIsDropdownOpen, shouldUseTray]);
-  y2(() => {
-    if (invalidValues.length > 0 && warningIconHovered && warningIconRef.current && tooltipPopperRef.current && rootElementRef.current) {
-      const computedDir = window.getComputedStyle(rootElementRef.current).direction;
-      const placement = computedDir === "rtl" ? "bottom-end" : "bottom-start";
-      const popperInstance = createPopper(warningIconRef.current, tooltipPopperRef.current, {
-        placement,
-        // @ts-ignore
-        modifiers: tooltipPopperModifiers
-      });
-      tooltipPopperRef.current.style.display = "block";
-      return () => {
-        popperInstance.destroy();
-      };
-    }
-  }, [warningIconHovered, invalidValues.length]);
   const handleOptionSelect = q2(
-    /**
-     * @param {string} selectedValue
-     * @param {{ toggleSelected?: boolean }} [options]
-     */
-    (selectedValue, { toggleSelected = false } = {}) => {
-      const option = allOptionsLookup[selectedValue];
-      if (option?.disabled) {
-        return;
+    /** @param {string} selectedValue */
+    (selectedValue) => {
+      onChange(selectedValue);
+      const match = suggestions.find((s3) => s3.value === selectedValue);
+      if (match) {
+        const label = labelFormatter ? labelFormatter(match) : match.label;
+        setInputValue(label);
+        setAnnouncement(`Selected ${label}`);
       }
-      if (values) {
-        const isExistingOption = values.includes(selectedValue);
-        let newValues;
-        if (!isExistingOption || toggleSelected && isExistingOption) {
-          if (toggleSelected && isExistingOption) {
-            newValues = values.filter((v3) => v3 !== selectedValue);
-          } else {
-            newValues = [...values, selectedValue];
-          }
-          onChange(newValues);
-          updateSelectionAnnouncement(
-            [selectedValue],
-            newValues.length < values.length ? "removed" : "added"
-          );
-          undoStack.current.push(values);
-          redoStack.current = [];
-        }
-      } else {
-        if (singleSelectValue !== selectedValue || toggleSelected && singleSelectValue === selectedValue) {
-          let newValue;
-          if (toggleSelected && singleSelectValue === selectedValue) {
-            newValue = "";
-          } else {
-            newValue = selectedValue;
-          }
-          onChange(newValue);
-          updateSelectionAnnouncement([selectedValue], newValue ? "removed" : "added");
-          undoStack.current.push([newValue]);
-          redoStack.current = [];
-          closeDropdown();
-        }
-        setInputValue("");
-      }
+      closeDropdown();
     },
-    [
-      onChange,
-      singleSelectValue,
-      values,
-      updateSelectionAnnouncement,
-      closeDropdown,
-      allOptionsLookup
-    ]
+    [onChange, suggestions, labelFormatter, closeDropdown]
+  );
+  const virtualKeyboardExplicitlyClosedRef = A2(null);
+  const virtualKeyboardDismissSubscription = A2(
+    /** @type {function | null} */
+    null
   );
   const focusInputWithVirtualKeyboardGuard = q2(
     /**
@@ -3676,15 +3637,9 @@ var PreactCombobox = ({
      * @param {HTMLInputElement | null} params.input
      * @param {boolean} [params.shouldPreventKeyboardReopen]
      * @param {boolean} [params.forceOpenKeyboard]
-     * @param {{ current: ReturnType<typeof setTimeout> | null } | null} [params.readonlyResetTimeoutRef]
      */
     (params) => {
-      const {
-        input,
-        shouldPreventKeyboardReopen = false,
-        forceOpenKeyboard = false,
-        readonlyResetTimeoutRef = null
-      } = params;
+      const { input, shouldPreventKeyboardReopen = false, forceOpenKeyboard = false } = params;
       if (!input) return;
       const shouldTemporarilyDisableInput = shouldPreventKeyboardReopen && !forceOpenKeyboard;
       if (shouldTemporarilyDisableInput) {
@@ -3692,20 +3647,7 @@ var PreactCombobox = ({
       }
       input.focus();
       if (shouldTemporarilyDisableInput) {
-        if (readonlyResetTimeoutRef?.current) {
-          clearTimeout(readonlyResetTimeoutRef.current);
-        }
-        const removeReadonly = () => {
-          input.removeAttribute("readonly");
-          if (readonlyResetTimeoutRef) {
-            readonlyResetTimeoutRef.current = null;
-          }
-        };
-        if (readonlyResetTimeoutRef) {
-          readonlyResetTimeoutRef.current = setTimeout(removeReadonly, 10);
-        } else {
-          setTimeout(removeReadonly, 10);
-        }
+        setTimeout(() => input.removeAttribute("readonly"), 10);
       }
     },
     []
@@ -3733,10 +3675,7 @@ var PreactCombobox = ({
     focusInput(true);
   }, [setIsTrayOpen, focusInput]);
   const handleInputChange = q2(
-    /**
-     * Handle input change
-     * @param {import('preact/compat').ChangeEvent<HTMLInputElement>} e - Input change event
-     */
+    /** @param {import('preact/compat').ChangeEvent<HTMLInputElement>} e */
     (e3) => {
       if (shouldUseTray) {
         e3.preventDefault();
@@ -3751,31 +3690,24 @@ var PreactCombobox = ({
     [setIsDropdownOpen, shouldUseTray, openTray]
   );
   const handleTrayInputChange = q2(
-    /**
-     * Handle tray input change
-     * @param {string} value - Input value
-     */
-    (value2) => {
-      setTrayActiveInputValue(value2);
-    },
+    /** @param {string} val */
+    (val) => setTrayActiveInputValue(val),
     []
-  );
-  const virtualKeyboardExplicitlyClosedRef = A2(null);
-  const virtualKeyboardDismissSubscription = A2(
-    /** @type {function | null} */
-    null
   );
   const handleInputFocus = q2(() => {
     setIsFocused(true);
     clearTimeout(blurTimeoutRef.current);
     blurTimeoutRef.current = void 0;
     if (shouldUseTray) {
-      if (!trayClosedExplicitlyRef.current) {
-        openTray();
-      }
+      if (!trayClosedExplicitlyRef.current) openTray();
       trayClosedExplicitlyRef.current = false;
     } else {
-      setIsDropdownOpen(true);
+      if (value && inputRef.current) {
+        inputRef.current.select();
+      }
+      if (inputValue) {
+        setIsDropdownOpen(true);
+      }
       dropdownClosedExplicitlyRef.current = false;
       if (!virtualKeyboardDismissSubscription.current) {
         virtualKeyboardDismissSubscription.current = subscribeToVirtualKeyboard({
@@ -3785,64 +3717,83 @@ var PreactCombobox = ({
         });
       }
     }
-    updateSelectionAnnouncement(arrayValues);
-  }, [
-    setIsFocused,
-    setIsDropdownOpen,
-    openTray,
-    arrayValues,
-    updateSelectionAnnouncement,
-    shouldUseTray
-  ]);
+  }, [setIsFocused, setIsDropdownOpen, openTray, shouldUseTray, value, inputValue]);
   const handleInputBlur = q2(() => {
     setIsFocused(false);
     clearTimeout(blurTimeoutRef.current);
     blurTimeoutRef.current = void 0;
     closeDropdown();
     dropdownClosedExplicitlyRef.current = false;
-    if (!multiple) {
-      if (inputTrimmed && (allowFreeText || allOptionsLookup[inputTrimmed])) {
-        handleOptionSelect(inputTrimmed);
+    const text = inputRef.current?.value?.trim() || "";
+    const input = inputRef.current;
+    if (!text) {
+      if (value !== "") onChange("");
+      if (input) {
+        input.setCustomValidity(required ? "Please select a date" : "");
+      }
+      setInputValue("");
+    } else if (text === displayLabel) {
+      if (input) input.setCustomValidity("");
+    } else {
+      const results = buildDateSuggestions(text, parserOptions);
+      const best = results[0];
+      if (best) {
+        onChange(best.value);
+        const bestLabel = labelFormatter ? labelFormatter(best) : best.label;
+        setInputValue(bestLabel);
+        if (input) input.setCustomValidity("");
+        setAnnouncement(`Selected ${bestLabel}`);
+      } else {
+        if (previousValidValueRef.current) {
+          const prevLabel = isoToDisplayLabel(previousValidValueRef.current, {
+            mode,
+            timezone,
+            allowSeconds,
+            allowMilliseconds,
+            labelFormatter
+          });
+          setInputValue(prevLabel);
+          if (input) input.setCustomValidity("");
+        } else {
+          setInputValue("");
+          onChange("");
+          if (input) {
+            input.setCustomValidity(required ? "Please enter a valid date" : "");
+          }
+        }
       }
     }
-    setInputValue("");
-    setLastSelectionAnnouncement("");
+    setAnnouncement("");
     if (!shouldUseTray) {
       virtualKeyboardDismissSubscription.current?.();
       virtualKeyboardDismissSubscription.current = null;
       virtualKeyboardExplicitlyClosedRef.current = null;
     }
+    if (onBlurProp && inputRef.current) {
+      onBlurProp(new FocusEvent("blur"));
+    }
   }, [
     setIsFocused,
-    allOptionsLookup,
-    allowFreeText,
-    handleOptionSelect,
-    multiple,
-    inputTrimmed,
     closeDropdown,
-    shouldUseTray
+    shouldUseTray,
+    value,
+    onChange,
+    required,
+    displayLabel,
+    parserOptions,
+    labelFormatter,
+    mode,
+    timezone,
+    allowSeconds,
+    allowMilliseconds,
+    onBlurProp
   ]);
-  const handleAddNewOption = q2(
-    /**
-     * @param {string} newValue
-     */
-    (newValue) => {
-      handleOptionSelect(newValue);
-      optionsListboxRef.current?.setActiveDescendant(newValue);
-    },
-    [handleOptionSelect]
-  );
   const handleKeyDown = q2(
-    /**
-     * @param {import('preact/compat').KeyboardEvent<HTMLInputElement>} e - Keyboard event
-     */
+    /** @param {import('preact/compat').KeyboardEvent<HTMLInputElement>} e */
     (e3) => {
       if (e3.key === "Enter") {
         e3.preventDefault();
-        const selected = optionsListboxRef.current?.selectActive();
-        if (!selected && allowFreeText && inputTrimmed !== "") {
-          handleAddNewOption(inputTrimmed);
-        }
+        optionsListboxRef.current?.selectActive();
       } else if (e3.key === "ArrowDown") {
         e3.preventDefault();
         setIsDropdownOpen(true);
@@ -3854,6 +3805,7 @@ var PreactCombobox = ({
         dropdownClosedExplicitlyRef.current = false;
         optionsListboxRef.current?.navigateUp();
       } else if (e3.key === "Escape") {
+        setInputValue(displayLabel);
         closeDropdown(true);
       } else if (e3.key === "Home" && (e3.ctrlKey || !inputValue) && getIsDropdownOpen()) {
         e3.preventDefault();
@@ -3871,128 +3823,36 @@ var PreactCombobox = ({
         setIsDropdownOpen(true);
         dropdownClosedExplicitlyRef.current = false;
         optionsListboxRef.current?.navigatePageUp();
-      } else if (inputValue === "" && (e3.ctrlKey || e3.metaKey) && e3.key === "z") {
-        e3.preventDefault();
-        const prevValues = undoStack.current.pop();
-        if (prevValues) {
-          onChange(prevValues);
-          updateSelectionAnnouncement(prevValues);
-          redoStack.current.push(Array.isArray(value) ? value : [value]);
-        }
-      } else if (inputValue === "" && (e3.ctrlKey || e3.metaKey) && e3.key === "y") {
-        e3.preventDefault();
-        const nextValues = redoStack.current.pop();
-        if (nextValues) {
-          onChange(nextValues);
-          updateSelectionAnnouncement(nextValues);
-          undoStack.current.push(Array.isArray(value) ? value : [value]);
-        }
       }
     },
-    [
-      allowFreeText,
-      handleAddNewOption,
-      inputValue,
-      inputTrimmed,
-      onChange,
-      getIsDropdownOpen,
-      setIsDropdownOpen,
-      value,
-      closeDropdown,
-      updateSelectionAnnouncement
-    ]
-  );
-  const handlePaste = q2(
-    /**
-     * @param {import('preact/compat').ClipboardEvent<HTMLInputElement>} e - Clipboard event
-     */
-    (e3) => {
-      if (!values) return;
-      const allOptions = Object.values(allOptionsLookup);
-      const valuesLookup = {
-        ...Object.fromEntries(values.map((v3) => [v3, v3])),
-        ...Object.fromEntries(allOptions.map((o3) => [o3.value, o3.value]))
-      };
-      const valuesLowerCaseLookup = {
-        ...Object.fromEntries(values.map((v3) => [v3.toLowerCase(), v3])),
-        ...Object.fromEntries(allOptions.map((o3) => [o3.value.toLowerCase(), o3.value]))
-      };
-      const optionsLabelLookup = Object.fromEntries(
-        allOptions.map((o3) => [o3.label.toLowerCase(), o3.value])
-      );
-      const pastedText = e3.clipboardData?.getData("text") || "";
-      if (!pastedText) return;
-      const pastedOptions = pastedText.split(",").map((x3) => x3.trim()).filter((x3) => x3 !== "").map(
-        (x3) => valuesLookup[x3] || valuesLowerCaseLookup[x3.toLowerCase()] || optionsLabelLookup[x3.toLocaleLowerCase()] || x3
-      );
-      const newValues = unique([...values, ...pastedOptions]);
-      onChange(newValues);
-      updateSelectionAnnouncement(newValues, "added");
-      undoStack.current.push(values);
-      redoStack.current = [];
-    },
-    [allOptionsLookup, onChange, values, updateSelectionAnnouncement]
+    [inputValue, displayLabel, getIsDropdownOpen, setIsDropdownOpen, closeDropdown]
   );
   const handleClearValue = q2(() => {
     setInputValue("");
-    onChange(multiple ? [] : "");
-    updateSelectionAnnouncement(arrayValues, "removed");
-    undoStack.current.push(arrayValues);
-    redoStack.current = [];
-    if (getIsFocused()) {
-      focusInput();
+    onChange("");
+    setAnnouncement("Date cleared");
+    if (inputRef.current) {
+      inputRef.current.setCustomValidity(required ? "Please select a date" : "");
     }
-  }, [onChange, multiple, arrayValues, updateSelectionAnnouncement, getIsFocused, focusInput]);
+    if (getIsFocused()) focusInput();
+  }, [onChange, required, getIsFocused, focusInput]);
   const handleRootElementClick = q2(() => {
-    if (!disabled) {
-      if (shouldUseTray) {
-        openTray();
-      } else {
-        if (inputRef.current && document.activeElement !== inputRef.current) {
-          focusInput(true);
-        }
-        setIsDropdownOpen(true);
-        dropdownClosedExplicitlyRef.current = false;
+    if (disabled) return;
+    if (shouldUseTray) {
+      openTray();
+    } else {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        focusInput(true);
       }
+      setIsDropdownOpen(true);
+      dropdownClosedExplicitlyRef.current = false;
     }
   }, [disabled, shouldUseTray, openTray, focusInput, setIsDropdownOpen]);
-  const selectChildren = T2(
-    () => formSubmitCompatible ? arrayValues.map((val) => /* @__PURE__ */ u3("option", { value: val, disabled: allOptionsLookup[val]?.disabled, children: allOptionsLookup[val]?.label || val }, val)).concat(
-      typeof allowedOptions !== "function" ? allowedOptions.filter((o3) => !arrayValuesLookup.has(o3.value)).slice(0, maxPresentedOptions - arrayValues.length).map((o3) => /* @__PURE__ */ u3("option", { value: o3.value, disabled: o3.disabled, children: o3.label }, o3.value)) : []
-    ) : null,
-    [
-      arrayValues,
-      allOptionsLookup,
-      formSubmitCompatible,
-      allowedOptions,
-      arrayValuesLookup,
-      maxPresentedOptions
-    ]
-  );
   y2(() => {
-    if (isLoading && isListOpen) {
-      setLoadingAnnouncement(mergedTranslations.loadingOptionsAnnouncement);
-    } else if (loadingAnnouncement && !isLoading && isListOpen) {
-      setLoadingAnnouncement(
-        filteredOptions.length ? mergedTranslations.optionsLoadedAnnouncement : mergedTranslations.noOptionsFoundAnnouncement
-      );
-      const timer = setTimeout(() => {
-        setLoadingAnnouncement("");
-      }, 1e3);
-      return () => clearTimeout(timer);
-    } else if (loadingAnnouncement && !isListOpen) {
-      setLoadingAnnouncement("");
+    if (!getIsFocused()) {
+      setInputValue(displayLabel);
     }
-  }, [
-    isLoading,
-    loadingAnnouncement,
-    isListOpen,
-    filteredOptions.length,
-    mergedTranslations.loadingOptionsAnnouncement,
-    mergedTranslations.optionsLoadedAnnouncement,
-    mergedTranslations.noOptionsFoundAnnouncement
-  ]);
-  const isServerSideForm = isServer && formSubmitCompatible;
+  }, [displayLabel, getIsFocused]);
   const setDropdownRef = q2(
     /** @param {HTMLUListElement | null} el */
     (el) => {
@@ -4000,45 +3860,40 @@ var PreactCombobox = ({
     },
     []
   );
-  const optionsListbox = !isServer ? /* @__PURE__ */ u3(
+  const optionsListbox = /* @__PURE__ */ u3(
     OptionsListbox_default,
     {
       ref: optionsListboxRef,
       id,
       searchText: activeInputValue,
       filteredOptions,
-      isLoading,
-      arrayValues,
-      invalidValues,
-      multiple,
-      allowFreeText,
+      isLoading: false,
+      arrayValues: value ? [value] : [],
+      invalidValues: [],
+      multiple: false,
+      allowFreeText: false,
       onOptionSelect: handleOptionSelect,
       onActiveDescendantChange: handleActiveDescendantChange,
       onClose: shouldUseTray ? closeTray : closeDropdown,
-      optionRenderer,
-      warningIcon,
-      tickIcon,
-      optionIconRenderer,
-      showValue,
-      language,
-      loadingRenderer,
-      translations: mergedTranslations,
+      showValue: false,
+      language: "en",
+      translations: defaultTranslations,
       theme,
-      maxPresentedOptions,
+      maxPresentedOptions: maxSuggestions,
       isOpen: isListOpen,
       shouldUseTray,
       setDropdownRef
     }
-  ) : null;
+  );
   return /* @__PURE__ */ u3(
     "div",
     {
       className: [
         className,
-        "PreactCombobox",
-        disabled ? "PreactCombobox--disabled" : "",
-        `PreactCombobox--${theme}`,
-        tray === "auto" ? "PreactCombobox--trayAuto" : ""
+        "PreactDatefield",
+        disabled ? "PreactDatefield--disabled" : "",
+        `PreactDatefield--${theme}`,
+        tray === "auto" ? "PreactDatefield--trayAuto" : ""
       ].filter(Boolean).join(" "),
       "aria-disabled": disabled,
       onClick: handleRootElementClick,
@@ -4046,78 +3901,48 @@ var PreactCombobox = ({
       ref: rootElementRef,
       ...rootElementProps,
       children: [
-        /* @__PURE__ */ u3("div", { className: "PreactCombobox-srOnly", "aria-live": "polite", "aria-atomic": "true", children: getIsFocused() ? lastSelectionAnnouncement : "" }),
-        /* @__PURE__ */ u3("div", { className: "PreactCombobox-srOnly", "aria-live": "polite", "aria-atomic": "true", children: getIsFocused() ? loadingAnnouncement : "" }),
-        /* @__PURE__ */ u3("div", { className: "PreactCombobox-srOnly", "aria-live": "polite", "aria-atomic": "true", children: invalidValues.length > 0 && getIsFocused() ? mergedTranslations.fieldContainsInvalidValues : "" }),
-        /* @__PURE__ */ u3("div", { className: `PreactCombobox-field ${disabled ? "PreactCombobox-field--disabled" : ""}`, children: [
-          !isServerSideForm && /* @__PURE__ */ u3(k, { children: [
-            !multiple && singleSelectValue && allOptionsLookup[singleSelectValue] && optionIconRenderer?.(allOptionsLookup[singleSelectValue], true),
-            /* @__PURE__ */ u3(
-              "input",
-              {
-                id,
-                ref: inputRef,
-                type: "text",
-                value: inputValue,
-                placeholder: !shouldUseTray && getIsDropdownOpen() ? mergedTranslations.searchPlaceholder : arrayValues.length > 0 ? arrayValues.map((value2) => allOptionsLookup[value2]?.label || value2).join(", ") : placeholder,
-                onChange: handleInputChange,
-                onKeyDown: handleKeyDown,
-                onFocus: handleInputFocus,
-                onBlur: () => {
-                  blurTimeoutRef.current = setTimeout(handleInputBlur, 200);
-                },
-                onPaste: handlePaste,
-                className: `PreactCombobox-input ${multiple ? "PreactCombobox-input--multiple" : ""} ${disabled ? "PreactCombobox-input--disabled" : ""}`,
-                role: "combobox",
-                "aria-expanded": getIsDropdownOpen(),
-                "aria-haspopup": "listbox",
-                "aria-controls": `${id}-options-listbox`,
-                "aria-activedescendant": activeDescendantValue ? `${id}-option-${toHTMLId(activeDescendantValue)}` : void 0,
-                disabled,
-                required: required && arrayValues.length === 0,
-                ...inputProps
-              }
-            ),
-            !disabled && showClearButton && arrayValues.length > 0 ? /* @__PURE__ */ u3(
-              "button",
-              {
-                type: "button",
-                className: "PreactCombobox-clearButton",
-                "aria-label": mergedTranslations.clearValue,
-                onClick: handleClearValue,
-                children: /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "\u2715" })
-              }
-            ) : null,
-            invalidValues.length > 0 && /* @__PURE__ */ u3(
-              "span",
-              {
-                ref: warningIconRef,
-                className: "PreactCombobox-warningIconWrapper",
-                onMouseEnter: () => setWarningIconHovered(true),
-                onMouseLeave: () => setWarningIconHovered(false),
-                children: warningIcon
-              }
-            ),
-            multiple && arrayValues.length > 1 && /* @__PURE__ */ u3("span", { className: "PreactCombobox-badge", children: mergedTranslations.selectedCountFormatter(arrayValues.length, language) }),
-            chevronIcon
-          ] }),
-          formSubmitCompatible ? /* @__PURE__ */ u3(
-            "select",
+        /* @__PURE__ */ u3("div", { className: "PreactDatefield-srOnly", "aria-live": "polite", "aria-atomic": "true", children: getIsFocused() ? announcement : "" }),
+        /* @__PURE__ */ u3("div", { className: `PreactDatefield-field ${disabled ? "PreactDatefield-field--disabled" : ""}`, children: [
+          /* @__PURE__ */ u3(
+            "input",
             {
-              ...selectElementProps,
-              multiple,
-              hidden: !isServerSideForm,
-              tabIndex: isServerSideForm ? 0 : -1,
-              readOnly: !isServerSideForm,
-              value,
-              name,
-              size: 1,
-              className: isServerSideForm ? "PreactCombobox-formSelect" : "",
-              children: selectChildren
+              id,
+              ref: inputRef,
+              type: "text",
+              value: inputValue,
+              placeholder: !shouldUseTray && getIsDropdownOpen() ? defaultTranslations.searchPlaceholder : displayLabel || placeholder,
+              onChange: handleInputChange,
+              onKeyDown: handleKeyDown,
+              onFocus: handleInputFocus,
+              onBlur: () => {
+                blurTimeoutRef.current = setTimeout(handleInputBlur, 200);
+              },
+              className: `PreactDatefield-input ${disabled ? "PreactDatefield-input--disabled" : ""}`,
+              role: "combobox",
+              "aria-expanded": getIsDropdownOpen(),
+              "aria-haspopup": "listbox",
+              "aria-controls": `${id}-options-listbox`,
+              "aria-activedescendant": activeDescendantValue ? `${id}-option-${toHTMLId(activeDescendantValue)}` : void 0,
+              autocomplete: "off",
+              disabled,
+              required: required && !value,
+              ...inputProps
             }
-          ) : null
+          ),
+          !disabled && showClearButton && value ? /* @__PURE__ */ u3(
+            "button",
+            {
+              type: "button",
+              className: "PreactDatefield-clearButton",
+              "aria-label": defaultTranslations.clearValue,
+              onClick: handleClearValue,
+              children: /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "\u2715" })
+            }
+          ) : null,
+          defaultChevronIcon,
+          formSubmitCompatible ? /* @__PURE__ */ u3("input", { type: "hidden", name, value: value || "" }) : null
         ] }),
-        optionsListbox ? /* @__PURE__ */ u3(Portal, { parent: portal, rootElementRef, children: shouldUseTray ? /* @__PURE__ */ u3(
+        /* @__PURE__ */ u3(Portal, { parent: portal, rootElementRef, children: shouldUseTray ? /* @__PURE__ */ u3(
           TraySearchList_default,
           {
             id,
@@ -4125,26 +3950,14 @@ var PreactCombobox = ({
             onClose: closeTray,
             trayLabel: getTrayLabel() || "",
             theme,
-            translations: mergedTranslations,
+            translations: defaultTranslations,
             onInputChange: handleTrayInputChange,
             children: optionsListbox
           }
-        ) : optionsListbox }) : null,
-        invalidValues.length > 0 && warningIconHovered && !isServer && /* @__PURE__ */ u3(Portal, { parent: portal, rootElementRef, children: /* @__PURE__ */ u3(
-          "div",
-          {
-            className: `PreactCombobox-valueTooltip ${`PreactCombobox--${theme}`}`,
-            role: "tooltip",
-            ref: tooltipPopperRef,
-            children: [
-              mergedTranslations.invalidValues,
-              invalidValues.map((value2) => /* @__PURE__ */ u3("div", { className: "PreactCombobox-tooltipValue", children: value2 }, value2))
-            ]
-          }
-        ) })
+        ) : optionsListbox })
       ]
     }
   );
 };
-var PreactCombobox_default = PreactCombobox;
-//# sourceMappingURL=PreactCombobox.js.map
+var PreactDatefield_default = PreactDatefield;
+//# sourceMappingURL=PreactDatefield.js.map

@@ -7,6 +7,35 @@
  */
 export function buildDateSuggestions(input: string, options?: DateParserOptions): DateSuggestion[];
 /**
+ * Convert an ISO value back to a display label without running the NLP parser.
+ *
+ * @param {string} value - ISO string: "2026-03-25" (date) or "2026-03-25T06:00:00.000Z" (datetime)
+ * @param {Object} [options]
+ * @param {DateParserMode} [options.mode="date"]
+ * @param {string} [options.timezone]
+ * @param {boolean} [options.allowSeconds=false]
+ * @param {boolean} [options.allowMilliseconds=false]
+ * @param {(suggestion: { year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, timezone: string, mode: DateParserMode }) => string} [options.labelFormatter]
+ * @returns {string} The display label, or "" if the value cannot be parsed
+ */
+export function isoToDisplayLabel(value: string, options?: {
+    mode?: DateParserMode | undefined;
+    timezone?: string | undefined;
+    allowSeconds?: boolean | undefined;
+    allowMilliseconds?: boolean | undefined;
+    labelFormatter?: ((suggestion: {
+        year: number;
+        month: number;
+        day: number;
+        hour: number;
+        minute: number;
+        second: number;
+        millisecond: number;
+        timezone: string;
+        mode: DateParserMode;
+    }) => string) | undefined;
+}): string;
+/**
  * Validate date text independently from UI concerns.
  *
  * @param {string} input

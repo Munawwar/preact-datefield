@@ -46,8 +46,8 @@ export function subscribeToVirtualKeyboard({ visibleCallback, heightCallback }: 
  * @returns {UseAsyncOptionsResult}
  */
 export function useAsyncOptions({ allowedOptions: allowedOptionsOriginal, selectedValues: selectedValuesOriginal, searchText, isOpen, language, maxNumberOfPresentedOptions, }: UseAsyncOptionsParams): UseAsyncOptionsResult;
-export type Option = import("./PreactCombobox.jsx").Option;
-export type OptionMatch = import("./PreactCombobox.jsx").OptionMatch;
+export type Option = import("./OptionsListbox.jsx").Option;
+export type OptionMatch = import("./OptionsListbox.jsx").OptionMatch;
 export type UseAsyncOptionsParams = {
     allowedOptions: Option[] | ((queryOrValues: string[] | string, limit: number, currentSelections: string[], abortControllerSignal: AbortSignal) => Promise<Option[]>);
     /**

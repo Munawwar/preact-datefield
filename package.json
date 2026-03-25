@@ -1,19 +1,18 @@
 {
-  "name": "preact-combobox",
-  "version": "0.3.1",
-  "description": "Preact Multi-select Combo Box component",
-  "main": "dist/cjs/PreactCombobox.js",
-  "module": "dist/esm/PreactCombobox.js",
+  "name": "preact-datefield",
+  "version": "0.1.0",
+  "description": "Preact date input with natural language parsing and autocomplete",
+  "main": "dist/cjs/PreactDatefield.js",
+  "module": "dist/esm/PreactDatefield.js",
   "exports": {
     ".": {
-      "types": "./dist/esm/PreactCombobox.d.ts",
-      "require": "./dist/cjs/PreactCombobox.js",
-      "default": "./dist/esm/PreactCombobox.js"
+      "types": "./dist/esm/PreactDatefield.d.ts",
+      "require": "./dist/cjs/PreactDatefield.js",
+      "default": "./dist/esm/PreactDatefield.js"
     }
   },
   "files": [
-    "dist/",
-    "OptionsListbox.md"
+    "dist/"
   ],
   "publishConfig": {
     "access": "public"
@@ -24,23 +23,23 @@
     "tsc": "tsc",
     "test:parser": "node --test test/dateParser.test.mjs",
     "example": "browser-sync start --port 3050 --server --files 'example' --files 'dist' --startPath '/example/example.html'",
-    "watch": "esbuild ./lib/PreactCombobox.jsx --outdir=dist/esm --format=esm --bundle --jsx-factory=h --jsx-fragment=Fragment --jsx=automatic --sourcemap --external:preact --external:@popperjs/core --watch",
+    "watch": "esbuild ./lib/PreactDatefield.jsx --outdir=dist/esm --format=esm --bundle --jsx-factory=h --jsx-fragment=Fragment --jsx=automatic --sourcemap --external:preact --external:@popperjs/core --watch",
     "build": "bash build.sh",
     "prepare": "husky",
     "pretest": "npm run build"
   },
   "keywords": [
     "preact",
-    "tags",
-    "tag input",
-    "component",
-    "multiselect",
-    "combobox",
+    "date",
+    "datepicker",
+    "datefield",
+    "date-input",
+    "natural-language",
     "autocomplete"
   ],
   "author": "Munawwar",
   "license": "MIT",
-  "repository": "https://github.com/Munawwar/preact-combobox",
+  "repository": "https://github.com/Munawwar/preact-datefield",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@popperjs/core": "^2.0.0",

@@ -1,0 +1,8 @@
+node_modules
+__ignore__
+
+# Misc
+.DS_Store
+npm-debug.log*
+.vscode
+CLAUDE.md

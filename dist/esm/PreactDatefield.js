@@ -593,8 +593,34 @@ var MONTH_KEYS = [
   "november",
   "december"
 ];
-var MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-var MONTH_SHORT_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+var MONTH_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+var MONTH_SHORT_KEYS = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec"
+];
 var timeZoneFormatterCache = /* @__PURE__ */ new Map();
 function normalizeInput(input) {
   return input.toLowerCase().replace(/[,]+/g, " ").replace(/\s+/g, " ").trim();
@@ -695,15 +721,43 @@ function parseTimeFields(hourRaw, minuteRaw, secondRaw, millisecondRaw, meridiem
   if (meridiem) {
     if (hourBase < 1 || hourBase > 12) return [];
     const hour = meridiem === "pm" ? hourBase % 12 + 12 : hourBase % 12;
-    return [{ hour, minute, second, millisecond, assumedMeridiem: false, hadSeconds, hadMilliseconds }];
+    return [
+      { hour, minute, second, millisecond, assumedMeridiem: false, hadSeconds, hadMilliseconds }
+    ];
   }
   if (hourBase < 0 || hourBase > 23) return [];
   if (hourBase >= 13 || hourBase === 0) {
-    return [{ hour: hourBase, minute, second, millisecond, assumedMeridiem: false, hadSeconds, hadMilliseconds }];
+    return [
+      {
+        hour: hourBase,
+        minute,
+        second,
+        millisecond,
+        assumedMeridiem: false,
+        hadSeconds,
+        hadMilliseconds
+      }
+    ];
   }
   return [
-    { hour: hourBase % 12, minute, second, millisecond, assumedMeridiem: true, hadSeconds, hadMilliseconds },
-    { hour: hourBase % 12 + 12, minute, second, millisecond, assumedMeridiem: true, hadSeconds, hadMilliseconds }
+    {
+      hour: hourBase % 12,
+      minute,
+      second,
+      millisecond,
+      assumedMeridiem: true,
+      hadSeconds,
+      hadMilliseconds
+    },
+    {
+      hour: hourBase % 12 + 12,
+      minute,
+      second,
+      millisecond,
+      assumedMeridiem: true,
+      hadSeconds,
+      hadMilliseconds
+    }
   ];
 }
 function parseTimeCandidates(tokens, allowSeconds, allowMilliseconds) {
@@ -713,7 +767,9 @@ function parseTimeCandidates(tokens, allowSeconds, allowMilliseconds) {
     if (consumed.has(i)) continue;
     const token = normalizeToken(tokens[i] || "");
     if (!token) continue;
-    let match = token.match(/^(\d{1,2})(?::(\d{1,2})(?::(\d{1,2})(?:[:.](\d{1,3}))?)?)?(a|am|p|pm)$/);
+    let match = token.match(
+      /^(\d{1,2})(?::(\d{1,2})(?::(\d{1,2})(?:[:.](\d{1,3}))?)?)?(a|am|p|pm)$/
+    );
     if (match) {
       const meridiem = match[5] === "a" || match[5] === "am" ? "am" : "pm";
       const parsed2 = parseTimeFields(
@@ -767,7 +823,7 @@ function parseTimeCandidates(tokens, allowSeconds, allowMilliseconds) {
   }
   return out;
 }
-function buildYearOnlyDate(year, favor) {
+function buildYearOnlyDate(favor) {
   if (favor === "end") return { month: 12, day: 31, boundary: "endOfYear" };
   return { month: 1, day: 1, boundary: "startOfYear" };
 }
@@ -821,20 +877,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
     const { a, b, c, index } = item;
     if (c !== null) {
       if (a >= 1e3 && a <= 9999) {
-        addDateCandidate(
-          out,
-          a,
-          b,
-          c,
-          /* @__PURE__ */ new Set([index]),
-          true,
-          true,
-          true,
-          false,
-          0,
-          false,
-          "none"
-        );
+        addDateCandidate(out, a, b, c, /* @__PURE__ */ new Set([index]), true, true, true, false, 0, false, "none");
         continue;
       }
       const normalizedYear = normalizeYear(c);
@@ -944,7 +987,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
   if (!monthWordTokens.length && !separated.length) {
     const yearOnly = yearNumbers.length === 1 ? yearNumbers[0] : null;
     if (yearOnly && dayNumbers.length === 0 && numericTokens.length === 1) {
-      const boundaryDate = buildYearOnlyDate(yearOnly.value, favor);
+      const boundaryDate = buildYearOnlyDate(favor);
       addDateCandidate(
         out,
         yearOnly.value,
@@ -1031,7 +1074,8 @@ function toTimeLabel(hour, minute, second, millisecond, includeSeconds, includeM
   const clockHour = hour % 12 || 12;
   let text = `${clockHour}:${pad(minute)} ${meridiem}`;
   if (includeSeconds) text = `${clockHour}:${pad(minute)}:${pad(second)} ${meridiem}`;
-  if (includeMilliseconds) text = `${clockHour}:${pad(minute)}:${pad(second)}.${pad(millisecond, 3)} ${meridiem}`;
+  if (includeMilliseconds)
+    text = `${clockHour}:${pad(minute)}:${pad(second)}.${pad(millisecond, 3)} ${meridiem}`;
   return text;
 }
 function toDateLabel(year, month, day) {
@@ -1082,7 +1126,14 @@ function getZonedParts(epochMs, timezone) {
 function getOffsetMs(epochMs, timezone) {
   const baseMs = Math.trunc(epochMs / 1e3) * 1e3;
   const parts = getZonedParts(baseMs, timezone);
-  const asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  const asUTC = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second
+  );
   return asUTC - baseMs;
 }
 function zonedDateTimeToUTCISOString(year, month, day, hour, minute, second, millisecond, timezone) {
@@ -1101,7 +1152,16 @@ function zonedDateTimeToUTCISOString(year, month, day, hour, minute, second, mil
 }
 function toDateTimeValue(year, month, day, hour, minute, second, millisecond, timezone) {
   try {
-    const iso = zonedDateTimeToUTCISOString(year, month, day, hour, minute, second, millisecond, timezone);
+    const iso = zonedDateTimeToUTCISOString(
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      second,
+      millisecond,
+      timezone
+    );
     if (iso) return iso;
   } catch (_error) {
   }
@@ -1177,7 +1237,8 @@ function buildDateSuggestions(input, options = {}) {
   const tokens = normalizedInput.split(" ").filter(Boolean);
   const timeCandidates = parseTimeCandidates(tokens, allowSeconds, allowMilliseconds);
   const consumedTimeIndices = /* @__PURE__ */ new Set();
-  for (const time of timeCandidates) for (const index of time.usedIndices) consumedTimeIndices.add(index);
+  for (const time of timeCandidates)
+    for (const index of time.usedIndices) consumedTimeIndices.add(index);
   let dateCandidates = parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, favor);
   if (!dateCandidates.length && mode === "datetime" && timeCandidates.length) {
     dateCandidates = [
@@ -1344,7 +1405,17 @@ function isoToDisplayLabel(value, options = {}) {
       const month = Number(match[2]);
       const day = Number(match[3]);
       if (!isValidDate(year, month, day)) return "";
-      const parts2 = { year, month, day, hour: 0, minute: 0, second: 0, millisecond: 0, timezone, mode };
+      const parts2 = {
+        year,
+        month,
+        day,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+        timezone,
+        mode
+      };
       if (options.labelFormatter) return options.labelFormatter(parts2);
       return toDateLabel(year, month, day);
     }
@@ -1367,7 +1438,14 @@ function isoToDisplayLabel(value, options = {}) {
     const dateStr = toDateLabel(zonedParts.year, zonedParts.month, zonedParts.day);
     const includeSeconds = allowSeconds && (zonedParts.second !== 0 || ms !== 0);
     const includeMs = allowMilliseconds && ms !== 0;
-    const timeStr = toTimeLabel(zonedParts.hour, zonedParts.minute, zonedParts.second, ms, includeSeconds, includeMs);
+    const timeStr = toTimeLabel(
+      zonedParts.hour,
+      zonedParts.minute,
+      zonedParts.second,
+      ms,
+      includeSeconds,
+      includeMs
+    );
     return `${dateStr} - ${timeStr} (${timezone})`;
   } catch (_error) {
     return "";

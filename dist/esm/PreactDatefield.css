@@ -74,7 +74,7 @@
   --preact-datefield-chevron-fill: var(--preact-datefield-light-chevron-fill);
   --preact-datefield-checkbox-border: var(--preact-datefield-light-checkbox-border);
   --preact-datefield-checkbox-selected-bg: var(--preact-datefield-light-checkbox-selected-bg);
-  --preact-datefield-checkbox-selected-border: var(--preact-datefield-light-checkbox-selected-border);
+  --preact-datefield-checkbox-selected-border: var( --preact-datefield-light-checkbox-selected-border );
   --preact-datefield-checkbox-selected-text: var(--preact-datefield-light-checkbox-selected-text);
   --preact-datefield-shadow: var(--preact-datefield-light-shadow);
   --preact-datefield-hover-clear-bg: var(--preact-datefield-light-hover-clear-bg);
@@ -104,7 +104,7 @@
     --preact-datefield-chevron-fill: var(--preact-datefield-dark-chevron-fill);
     --preact-datefield-checkbox-border: var(--preact-datefield-dark-checkbox-border);
     --preact-datefield-checkbox-selected-bg: var(--preact-datefield-dark-checkbox-selected-bg);
-    --preact-datefield-checkbox-selected-border: var(--preact-datefield-dark-checkbox-selected-border);
+    --preact-datefield-checkbox-selected-border: var( --preact-datefield-dark-checkbox-selected-border );
     --preact-datefield-checkbox-selected-text: var(--preact-datefield-dark-checkbox-selected-text);
     --preact-datefield-shadow: var(--preact-datefield-dark-shadow);
     --preact-datefield-hover-clear-bg: var(--preact-datefield-dark-hover-clear-bg);
@@ -163,7 +163,7 @@
   --preact-datefield-chevron-fill: var(--preact-datefield-light-chevron-fill);
   --preact-datefield-checkbox-border: var(--preact-datefield-light-checkbox-border);
   --preact-datefield-checkbox-selected-bg: var(--preact-datefield-light-checkbox-selected-bg);
-  --preact-datefield-checkbox-selected-border: var(--preact-datefield-light-checkbox-selected-border);
+  --preact-datefield-checkbox-selected-border: var( --preact-datefield-light-checkbox-selected-border );
   --preact-datefield-checkbox-selected-text: var(--preact-datefield-light-checkbox-selected-text);
   --preact-datefield-shadow: var(--preact-datefield-light-shadow);
   --preact-datefield-hover-clear-bg: var(--preact-datefield-light-hover-clear-bg);

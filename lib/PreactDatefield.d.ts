@@ -2,6 +2,7 @@ export default PreactDatefield;
 export type DateSuggestion = import("./dateParser.js").DateSuggestion;
 export type DateParserMode = import("./dateParser.js").DateParserMode;
 export type DateBoundaryPreference = import("./dateParser.js").DateBoundaryPreference;
+export type DateDayPreference = import("./dateParser.js").DateDayPreference;
 export type DateOrder = import("./dateParser.js").DateOrder;
 export type PreactDatefieldProps = {
     /**
@@ -35,7 +36,15 @@ export type PreactDatefieldProps = {
     /**
      * Boundary preference for inferred times
      */
+    timeFavor?: import("./dateParser.js").DateBoundaryPreference | undefined;
+    /**
+     * Deprecated alias for timeFavor
+     */
     favor?: import("./dateParser.js").DateBoundaryPreference | undefined;
+    /**
+     * Direction preference for weekday-only input
+     */
+    dayFavor?: import("./dateParser.js").DateDayPreference | undefined;
     /**
      * IANA timezone string. Default: auto-detect
      */
@@ -133,5 +142,5 @@ export type Translations = {
  * PreactDatefield component - a date input with autocomplete suggestions
  * @param {PreactDatefieldProps} props
  */
-declare function PreactDatefield({ id: idProp, name, className, value, onChange, onBlur: onBlurProp, mode, favor, timezone: timezoneProp, dateOrder, locale, allowSeconds, allowMilliseconds, labelFormatter, placeholder, required, disabled, formSubmitCompatible, theme, tray, trayBreakpoint, trayLabel: trayLabelProp, showClearButton, portal, rootElementProps, inputProps, maxSuggestions, }: PreactDatefieldProps): import("preact").JSX.Element;
+declare function PreactDatefield({ id: idProp, name, className, value, onChange, onBlur: onBlurProp, mode, timeFavor, favor, dayFavor, timezone: timezoneProp, dateOrder, locale, allowSeconds, allowMilliseconds, labelFormatter, placeholder, required, disabled, formSubmitCompatible, theme, tray, trayBreakpoint, trayLabel: trayLabelProp, showClearButton, portal, rootElementProps, inputProps, maxSuggestions, }: PreactDatefieldProps): import("preact").JSX.Element;
 export { buildDateSuggestions, isoToDisplayLabel } from "./dateParser.js";

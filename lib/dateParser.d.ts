@@ -45,10 +45,12 @@ export function isoToDisplayLabel(value: string, options?: {
 export function validateDateInput(input: string, options?: ValidateDateInputOptions): ValidateDateInputResult;
 export type DateParserMode = "date" | "datetime";
 export type DateBoundaryPreference = "start" | "end";
+export type DateDayPreference = "past" | "future";
 export type DateOrder = "auto" | "MDY" | "DMY" | "YMD";
 export type DateParserOptions = {
     mode?: DateParserMode | undefined;
-    favor?: DateBoundaryPreference | undefined;
+    timeFavor?: DateBoundaryPreference | undefined;
+    dayFavor?: DateDayPreference | undefined;
     timezone?: string | undefined;
     now?: Date | undefined;
     locale?: string | undefined;
@@ -82,7 +84,8 @@ export type DateSuggestion = {
 export type ValidateDateInputOptions = {
     required?: boolean | undefined;
     mode?: DateParserMode | undefined;
-    favor?: DateBoundaryPreference | undefined;
+    timeFavor?: DateBoundaryPreference | undefined;
+    dayFavor?: DateDayPreference | undefined;
     timezone?: string | undefined;
     now?: Date | undefined;
     locale?: string | undefined;
@@ -119,4 +122,5 @@ export type ParsedDate = {
     orderPenalty: number;
     partialMonth: boolean;
     boundary: InferredBoundary;
+    weekday: number | null;
 };

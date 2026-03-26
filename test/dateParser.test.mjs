@@ -23,7 +23,7 @@ test("Case 1: month + day (date mode)", () => {
 });
 
 test("Case 1: month + day (datetime favor start)", () => {
-  const out = first("Mar 6", { mode: "datetime", favor: "start" });
+  const out = first("Mar 6", { mode: "datetime", timeFavor: "start" });
   assert.ok(out);
   assert.equal(out.label, "Mar 6, 2026 - start of day (Asia/Dubai)");
   assert.equal(out.value, "2026-03-05T20:00:00.000Z");
@@ -31,7 +31,7 @@ test("Case 1: month + day (datetime favor start)", () => {
 });
 
 test("Case 1: month + day (datetime favor end)", () => {
-  const out = first("Mar 6", { mode: "datetime", favor: "end" });
+  const out = first("Mar 6", { mode: "datetime", timeFavor: "end" });
   assert.ok(out);
   assert.equal(out.label, "Mar 6, 2026 - end of day (Asia/Dubai)");
   assert.equal(out.value, "2026-03-06T19:59:59.999Z");
@@ -68,12 +68,40 @@ test("Case 2: supported forms 6p / 6pm / 18:00", () => {
   assert.equal(first("18:00", { mode: "datetime" })?.label, "Mar 24, 2026 - 6:00 PM (Asia/Dubai)");
 });
 
+test("day-of-week parsing prefers past dates by default", () => {
+  assert.deepEqual(labels("tuesday", { mode: "date" }).slice(0, 3), [
+    "Past Tuesday, Mar 17, 2026",
+    "Today Tuesday, Mar 24, 2026",
+    "Upcoming Tuesday, Mar 31, 2026",
+  ]);
+  assert.deepEqual(labels("monday", { mode: "date" }).slice(0, 2), [
+    "Past Monday, Mar 23, 2026",
+    "Upcoming Monday, Mar 30, 2026",
+  ]);
+  assert.deepEqual(labels("sun", { mode: "date" }).slice(0, 2), [
+    "Past Sunday, Mar 22, 2026",
+    "Upcoming Sunday, Mar 29, 2026",
+  ]);
+  assert.deepEqual(labels("sunday", { mode: "date" }).slice(0, 2), [
+    "Past Sunday, Mar 22, 2026",
+    "Upcoming Sunday, Mar 29, 2026",
+  ]);
+  assert.equal(
+    first("sun", { mode: "date", dayFavor: "future" })?.label,
+    "Upcoming Sunday, Mar 29, 2026",
+  );
+  assert.equal(
+    first("sun 6pm", { mode: "datetime" })?.label,
+    "Past Sunday, Mar 22, 2026 - 6:00 PM (Asia/Dubai)",
+  );
+});
+
 test("empty input shows default option unless disabled", () => {
   assert.deepEqual(labels("", { mode: "date" }), ["Mar 24, 2026"]);
-  assert.deepEqual(labels("", { mode: "datetime", favor: "start" }), [
+  assert.deepEqual(labels("", { mode: "datetime", timeFavor: "start" }), [
     "Mar 24, 2026 - start of day (Asia/Dubai)",
   ]);
-  assert.deepEqual(labels("", { mode: "datetime", favor: "end" }), [
+  assert.deepEqual(labels("", { mode: "datetime", timeFavor: "end" }), [
     "Mar 24, 2026 - end of day (Asia/Dubai)",
   ]);
   assert.deepEqual(labels("", { mode: "date", includeDefaultOption: false }), []);
@@ -134,13 +162,13 @@ test("DMY default and short year parsing", () => {
 test("year handling defaults and year-only behavior", () => {
   assert.equal(first("March 6", { mode: "date" })?.label, "Mar 6, 2026");
 
-  const start = first("2026", { mode: "datetime", favor: "start" });
+  const start = first("2026", { mode: "datetime", timeFavor: "start" });
   assert.ok(start);
   assert.equal(start.label, "Jan 1, 2026 - start of year (Asia/Dubai)");
   assert.equal(start.value, "2025-12-31T20:00:00.000Z");
   assert.equal(start.inferredBoundary, "startOfYear");
 
-  const end = first("2026", { mode: "datetime", favor: "end" });
+  const end = first("2026", { mode: "datetime", timeFavor: "end" });
   assert.ok(end);
   assert.equal(end.label, "Dec 31, 2026 - end of year (Asia/Dubai)");
   assert.equal(end.value, "2026-12-31T19:59:59.999Z");
@@ -148,13 +176,13 @@ test("year handling defaults and year-only behavior", () => {
 });
 
 test("YYYY-MM infers month boundary in datetime mode", () => {
-  const start = first("2026-03", { mode: "datetime", favor: "start" });
+  const start = first("2026-03", { mode: "datetime", timeFavor: "start" });
   assert.ok(start);
   assert.equal(start.label, "Mar 1, 2026 - start of month (Asia/Dubai)");
   assert.equal(start.value, "2026-02-28T20:00:00.000Z");
   assert.equal(start.inferredBoundary, "startOfMonth");
 
-  const end = first("2026-03", { mode: "datetime", favor: "end" });
+  const end = first("2026-03", { mode: "datetime", timeFavor: "end" });
   assert.ok(end);
   assert.equal(end.label, "Mar 31, 2026 - end of month (Asia/Dubai)");
   assert.equal(end.value, "2026-03-31T19:59:59.999Z");

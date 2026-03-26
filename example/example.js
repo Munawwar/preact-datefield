@@ -35,7 +35,7 @@ function DatetimeFavorStartExample({ theme }) {
       <${PreactDatefield}
         id="dt-start"
         mode="datetime"
-        favor="start"
+        timeFavor="start"
         timezone="Asia/Dubai"
         theme=${theme}
         value=${value}
@@ -55,7 +55,7 @@ function DatetimeFavorEndExample({ theme }) {
       <${PreactDatefield}
         id="dt-end"
         mode="datetime"
-        favor="end"
+        timeFavor="end"
         timezone="Asia/Dubai"
         theme=${theme}
         value=${value}

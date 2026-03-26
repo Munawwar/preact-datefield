@@ -2724,6 +2724,25 @@ var MONTH_SHORT_KEYS = [
   "nov",
   "dec"
 ];
+var WEEKDAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+var WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
+var WEEKDAY_ALIASES = [
+  ["sun"],
+  ["mon"],
+  ["tue", "tues"],
+  ["wed", "weds"],
+  ["thu", "thur", "thurs"],
+  ["fri"],
+  ["sat"]
+];
 var timeZoneFormatterCache = /* @__PURE__ */ new Map();
 function normalizeInput(input) {
   return input.toLowerCase().replace(/[,]+/g, " ").replace(/\s+/g, " ").trim();
@@ -2767,6 +2786,25 @@ function monthMatches(token) {
     if (full.startsWith(token) || short.startsWith(token)) {
       out.push({ month: i4 + 1, partial: token !== full && token !== short });
     }
+  }
+  return out;
+}
+function weekdayMatches(token) {
+  if (!token || !/^[a-z]+$/.test(token)) return [];
+  const out = [];
+  for (let i4 = 0; i4 < WEEKDAY_KEYS.length; i4 += 1) {
+    const full = WEEKDAY_KEYS[i4] || "";
+    const aliases = WEEKDAY_ALIASES[i4] || [];
+    let matches = full.startsWith(token);
+    for (const alias of aliases) {
+      if (alias.startsWith(token)) {
+        matches = true;
+        break;
+      }
+    }
+    if (!matches) continue;
+    const isExact = full === token || aliases.includes(token);
+    out.push({ weekday: i4, partial: !isExact });
   }
   return out;
 }
@@ -2818,7 +2856,6 @@ function parseTimeFields(hourRaw, minuteRaw, secondRaw, millisecondRaw, meridiem
   if (millisecond < 0 || millisecond > 999) return [];
   if (!allowSeconds && secondRaw) return [];
   if (!allowMilliseconds && millisecondRaw) return [];
-  if (millisecondRaw && !secondRaw && !allowSeconds) return [];
   const hadSeconds = Boolean(secondRaw);
   const hadMilliseconds = Boolean(millisecondRaw);
   if (meridiem) {
@@ -2926,11 +2963,37 @@ function parseTimeCandidates(tokens, allowSeconds, allowMilliseconds) {
   }
   return out;
 }
-function buildYearOnlyDate(favor) {
-  if (favor === "end") return { month: 12, day: 31, boundary: "endOfYear" };
+function buildYearOnlyDate(timeFavor) {
+  if (timeFavor === "end") return { month: 12, day: 31, boundary: "endOfYear" };
   return { month: 1, day: 1, boundary: "startOfYear" };
 }
-function addDateCandidate(list, year, month, day, usedIndices, explicitYear, explicitMonth, explicitDay, ambiguousOrder, orderPenalty, partialMonth, boundary) {
+function getWeekdayDate(now, targetWeekday, dayFavor) {
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentWeekday = date.getDay();
+  if (dayFavor === "past") {
+    const delta = (currentWeekday - targetWeekday + 7) % 7;
+    date.setDate(date.getDate() - delta);
+  } else {
+    let delta = (targetWeekday - currentWeekday + 7) % 7;
+    if (delta === 0) delta = 7;
+    date.setDate(date.getDate() + delta);
+  }
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate()
+  };
+}
+function shiftDate(date, deltaDays) {
+  const shifted = new Date(Date.UTC(date.year, date.month - 1, date.day));
+  shifted.setUTCDate(shifted.getUTCDate() + deltaDays);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate()
+  };
+}
+function addDateCandidate(list, year, month, day, usedIndices, explicitYear, explicitMonth, explicitDay, ambiguousOrder, orderPenalty, partialMonth, boundary, weekday = null) {
   if (!isValidDate(year, month, day)) return;
   list.push({
     year,
@@ -2943,15 +3006,17 @@ function addDateCandidate(list, year, month, day, usedIndices, explicitYear, exp
     ambiguousOrder,
     orderPenalty,
     partialMonth,
-    boundary
+    boundary,
+    weekday
   });
 }
-function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, favor) {
+function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, timeFavor, dayFavor) {
   const out = [];
   const separated = [];
   const monthWordTokens = [];
   const numericTokens = [];
   const dayTokens = [];
+  const weekdayTokens = [];
   for (let i4 = 0; i4 < tokens.length; i4 += 1) {
     if (consumedTimeIndices.has(i4)) continue;
     const token = normalizeToken(tokens[i4] || "");
@@ -2969,6 +3034,11 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
     const months = monthMatches(token);
     if (months.length) {
       monthWordTokens.push({ index: i4, months });
+      continue;
+    }
+    const weekdays = weekdayMatches(token);
+    if (weekdays.length) {
+      weekdayTokens.push({ index: i4, weekdays });
       continue;
     }
     const day = toDayNumber(token);
@@ -3006,7 +3076,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
       continue;
     }
     if (a3 >= 1e3 && a3 <= 9999 && b2 >= 1 && b2 <= 12) {
-      const day = favor === "end" ? daysInMonth(a3, b2) : 1;
+      const day = timeFavor === "end" ? daysInMonth(a3, b2) : 1;
       addDateCandidate(
         out,
         a3,
@@ -3019,7 +3089,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
         false,
         0,
         false,
-        favor === "end" ? "endOfMonth" : "startOfMonth"
+        timeFavor === "end" ? "endOfMonth" : "startOfMonth"
       );
       continue;
     }
@@ -3090,7 +3160,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
   if (!monthWordTokens.length && !separated.length) {
     const yearOnly = yearNumbers.length === 1 ? yearNumbers[0] : null;
     if (yearOnly && dayNumbers.length === 0 && numericTokens.length === 1) {
-      const boundaryDate = buildYearOnlyDate(favor);
+      const boundaryDate = buildYearOnlyDate(timeFavor);
       addDateCandidate(
         out,
         yearOnly.value,
@@ -3154,6 +3224,36 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
         );
       }
     }
+    if (!numericTokens.length && weekdayTokens.length) {
+      const today = { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+      const currentWeekday = now.getDay();
+      for (const weekdayToken of weekdayTokens) {
+        for (const weekdayItem of weekdayToken.weekdays) {
+          const pastDate = getWeekdayDate(now, weekdayItem.weekday, "past");
+          const upcomingDate = getWeekdayDate(now, weekdayItem.weekday, "future");
+          const candidates = weekdayItem.weekday === currentWeekday ? dayFavor === "future" ? [upcomingDate, today, shiftDate(today, -7)] : [shiftDate(today, -7), today, upcomingDate] : dayFavor === "future" ? [upcomingDate, pastDate] : [pastDate, upcomingDate];
+          for (let orderPenalty = 0; orderPenalty < candidates.length; orderPenalty += 1) {
+            const candidate = candidates[orderPenalty];
+            if (!candidate) continue;
+            addDateCandidate(
+              out,
+              candidate.year,
+              candidate.month,
+              candidate.day,
+              /* @__PURE__ */ new Set([weekdayToken.index]),
+              false,
+              false,
+              false,
+              false,
+              orderPenalty,
+              weekdayItem.partial,
+              "none",
+              weekdayItem.weekday
+            );
+          }
+        }
+      }
+    }
   }
   return out;
 }
@@ -3184,6 +3284,15 @@ function toTimeLabel(hour, minute, second, millisecond, includeSeconds, includeM
 function toDateLabel(year, month, day) {
   const monthName = MONTH_SHORT[month - 1] || MONTH_SHORT[0];
   return `${monthName} ${day}, ${year}`;
+}
+function toParsedDateLabel(parsedDate, now) {
+  const base = toDateLabel(parsedDate.year, parsedDate.month, parsedDate.day);
+  if (parsedDate.weekday == null) return base;
+  const weekday = WEEKDAY_LABELS[parsedDate.weekday];
+  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const candidateUTC = Date.UTC(parsedDate.year, parsedDate.month - 1, parsedDate.day);
+  const prefix = candidateUTC < todayUTC ? "Past" : candidateUTC > todayUTC ? "Upcoming" : "Today";
+  return `${prefix} ${weekday}, ${base}`;
 }
 function toDateValue(year, month, day) {
   return `${year}-${pad(month)}-${pad(day)}`;
@@ -3270,7 +3379,7 @@ function toDateTimeValue(year, month, day, hour, minute, second, millisecond, ti
   }
   return new Date(Date.UTC(year, month - 1, day, hour, minute, second, millisecond)).toISOString();
 }
-function buildDefaultSuggestion(mode, favor, timezone, defaultDate) {
+function buildDefaultSuggestion(mode, timeFavor, timezone, defaultDate) {
   const year = defaultDate.getFullYear();
   const month = defaultDate.getMonth() + 1;
   const day = defaultDate.getDate();
@@ -3295,7 +3404,7 @@ function buildDefaultSuggestion(mode, favor, timezone, defaultDate) {
       millisecond: 0
     };
   }
-  const isEnd = favor === "end";
+  const isEnd = timeFavor === "end";
   const hour = isEnd ? 23 : 0;
   const minute = isEnd ? 59 : 0;
   const second = isEnd ? 59 : 0;
@@ -3324,7 +3433,8 @@ function buildDefaultSuggestion(mode, favor, timezone, defaultDate) {
 function buildDateSuggestions(input, options = {}) {
   const normalizedInput = normalizeInput(input || "");
   const mode = options.mode || "date";
-  const favor = options.favor || "start";
+  const timeFavor = options.timeFavor === "end" ? "end" : "start";
+  const dayFavor = options.dayFavor === "future" ? "future" : "past";
   const now = options.now || /* @__PURE__ */ new Date();
   const defaultDate = options.defaultDate || now;
   const includeDefaultOption = options.includeDefaultOption !== false;
@@ -3335,14 +3445,21 @@ function buildDateSuggestions(input, options = {}) {
   const maxOptions = Math.max(1, options.maxOptions || 10);
   if (!normalizedInput) {
     if (!includeDefaultOption) return [];
-    return [buildDefaultSuggestion(mode, favor, timezone, defaultDate)];
+    return [buildDefaultSuggestion(mode, timeFavor, timezone, defaultDate)];
   }
   const tokens = normalizedInput.split(" ").filter(Boolean);
   const timeCandidates = parseTimeCandidates(tokens, allowSeconds, allowMilliseconds);
   const consumedTimeIndices = /* @__PURE__ */ new Set();
   for (const time of timeCandidates)
     for (const index of time.usedIndices) consumedTimeIndices.add(index);
-  let dateCandidates = parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, favor);
+  let dateCandidates = parseDateCandidates(
+    tokens,
+    consumedTimeIndices,
+    now,
+    resolvedOrder,
+    timeFavor,
+    dayFavor
+  );
   if (!dateCandidates.length && mode === "datetime" && timeCandidates.length) {
     dateCandidates = [
       {
@@ -3356,7 +3473,8 @@ function buildDateSuggestions(input, options = {}) {
         ambiguousOrder: false,
         orderPenalty: 0,
         partialMonth: false,
-        boundary: "none"
+        boundary: "none",
+        weekday: null
       }
     ];
   }
@@ -3372,7 +3490,7 @@ function buildDateSuggestions(input, options = {}) {
       if (seen.has(value2)) continue;
       seen.add(value2);
       suggestions.push({
-        label: toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day),
+        label: toParsedDateLabel(dateCandidate, now),
         value: value2,
         score: score2,
         timezone,
@@ -3415,7 +3533,7 @@ function buildDateSuggestions(input, options = {}) {
         );
         if (seen.has(value2)) continue;
         seen.add(value2);
-        const label2 = `${toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day)} - ${toTimeLabel(
+        const label2 = `${toParsedDateLabel(dateCandidate, now)} - ${toTimeLabel(
           timeCandidate.hour,
           timeCandidate.minute,
           timeCandidate.second,
@@ -3445,7 +3563,7 @@ function buildDateSuggestions(input, options = {}) {
       }
       continue;
     }
-    const isEnd = dateCandidate.boundary === "endOfDay" || dateCandidate.boundary === "endOfYear" || favor === "end";
+    const isEnd = dateCandidate.boundary === "endOfDay" || dateCandidate.boundary === "endOfYear" || timeFavor === "end";
     const isYearBoundary = dateCandidate.boundary === "startOfYear" || dateCandidate.boundary === "endOfYear";
     const hour = isEnd ? 23 : 0;
     const minute = isEnd ? 59 : 0;
@@ -3468,7 +3586,7 @@ function buildDateSuggestions(input, options = {}) {
     if (seen.has(value)) continue;
     seen.add(value);
     const boundaryLabel = inferredBoundary === "startOfDay" ? "start of day" : inferredBoundary === "endOfDay" ? "end of day" : inferredBoundary === "startOfMonth" ? "start of month" : inferredBoundary === "endOfMonth" ? "end of month" : inferredBoundary === "startOfYear" ? "start of year" : "end of year";
-    const label = `${toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day)} - ${boundaryLabel} (${timezone})`;
+    const label = `${toParsedDateLabel(dateCandidate, now)} - ${boundaryLabel} (${timezone})`;
     suggestions.push({
       label,
       value,
@@ -3642,7 +3760,9 @@ var PreactDatefield = ({
   onChange,
   onBlur: onBlurProp,
   mode = "date",
-  favor = "start",
+  timeFavor,
+  favor,
+  dayFavor = "past",
   timezone: timezoneProp,
   dateOrder = "auto",
   locale = "en-US",
@@ -3664,6 +3784,10 @@ var PreactDatefield = ({
   maxSuggestions = 10
 }) => {
   const timezone = timezoneProp || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const resolvedTimeFavor = (
+    /** @type {DateBoundaryPreference} */
+    timeFavor === "end" || timeFavor == null && favor === "end" ? "end" : "start"
+  );
   const autoId = g2();
   const id = idProp || autoId;
   const [inputValue, setInputValue] = h2("");
@@ -3719,7 +3843,8 @@ var PreactDatefield = ({
   const parserOptions = T2(
     () => ({
       mode,
-      favor,
+      timeFavor: resolvedTimeFavor,
+      dayFavor,
       timezone,
       dateOrder,
       locale,
@@ -3727,7 +3852,17 @@ var PreactDatefield = ({
       allowMilliseconds,
       maxOptions: maxSuggestions
     }),
-    [mode, favor, timezone, dateOrder, locale, allowSeconds, allowMilliseconds, maxSuggestions]
+    [
+      mode,
+      resolvedTimeFavor,
+      dayFavor,
+      timezone,
+      dateOrder,
+      locale,
+      allowSeconds,
+      allowMilliseconds,
+      maxSuggestions
+    ]
   );
   const suggestions = T2(
     () => buildDateSuggestions(activeInputValue, parserOptions),

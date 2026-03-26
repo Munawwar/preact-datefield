@@ -20,6 +20,7 @@ import "./PreactDatefield.css";
 /** @typedef {import("./dateParser.js").DateSuggestion} DateSuggestion */
 /** @typedef {import("./dateParser.js").DateParserMode} DateParserMode */
 /** @typedef {import("./dateParser.js").DateBoundaryPreference} DateBoundaryPreference */
+/** @typedef {import("./dateParser.js").DateDayPreference} DateDayPreference */
 /** @typedef {import("./dateParser.js").DateOrder} DateOrder */
 
 /**
@@ -31,7 +32,9 @@ import "./PreactDatefield.css";
  * @property {(value: string) => void} onChange Called with ISO string or "" when cleared
  * @property {(event: FocusEvent) => void} [onBlur] Optional blur callback
  * @property {DateParserMode} [mode="date"] Date-only or datetime mode
- * @property {DateBoundaryPreference} [favor="start"] Boundary preference for inferred times
+ * @property {DateBoundaryPreference} [timeFavor="start"] Boundary preference for inferred times
+ * @property {DateBoundaryPreference} [favor] Deprecated alias for timeFavor
+ * @property {DateDayPreference} [dayFavor="past"] Direction preference for weekday-only input
  * @property {string} [timezone] IANA timezone string. Default: auto-detect
  * @property {DateOrder} [dateOrder="auto"] Numeric date order preference
  * @property {string} [locale="en-US"] BCP 47 locale for dateOrder resolution
@@ -171,7 +174,9 @@ const PreactDatefield = ({
   onChange,
   onBlur: onBlurProp,
   mode = "date",
-  favor = "start",
+  timeFavor,
+  favor,
+  dayFavor = "past",
   timezone: timezoneProp,
   dateOrder = "auto",
   locale = "en-US",
@@ -193,6 +198,9 @@ const PreactDatefield = ({
   maxSuggestions = 10,
 }) => {
   const timezone = timezoneProp || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const resolvedTimeFavor = /** @type {DateBoundaryPreference} */ (
+    timeFavor === "end" || (timeFavor == null && favor === "end") ? "end" : "start"
+  );
 
   const autoId = useId();
   const id = idProp || autoId;
@@ -248,7 +256,8 @@ const PreactDatefield = ({
   const parserOptions = useMemo(
     () => ({
       mode,
-      favor,
+      timeFavor: resolvedTimeFavor,
+      dayFavor,
       timezone,
       dateOrder,
       locale,
@@ -256,7 +265,17 @@ const PreactDatefield = ({
       allowMilliseconds,
       maxOptions: maxSuggestions,
     }),
-    [mode, favor, timezone, dateOrder, locale, allowSeconds, allowMilliseconds, maxSuggestions],
+    [
+      mode,
+      resolvedTimeFavor,
+      dayFavor,
+      timezone,
+      dateOrder,
+      locale,
+      allowSeconds,
+      allowMilliseconds,
+      maxSuggestions,
+    ],
   );
 
   // Compute suggestions from input text

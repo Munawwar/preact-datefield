@@ -35,7 +35,7 @@ function App() {
     <PreactDatefield
       id="start-date"
       mode="datetime"
-      favor="start"
+      timeFavor="start"
       timezone="Asia/Dubai"
       value={value}
       onChange={setValue}
@@ -53,7 +53,9 @@ function App() {
 | `value` | `string` | required | `""`, `YYYY-MM-DD`, or UTC ISO string |
 | `onChange` | `(value: string) => void` | required | Receives ISO value or `""` |
 | `mode` | `"date" \| "datetime"` | `"date"` | Parsing/output mode |
-| `favor` | `"start" \| "end"` | `"start"` | For inferred boundaries |
+| `timeFavor` | `"start" \| "end"` | `"start"` | For inferred time boundaries |
+| `favor` | `"start" \| "end"` | `undefined` | Deprecated alias for `timeFavor` |
+| `dayFavor` | `"past" \| "future"` | `"past"` | Direction for weekday-only input (`Sun`, `Monday`) |
 | `timezone` | `string` | browser timezone | IANA timezone |
 | `dateOrder` | `"auto" \| "MDY" \| "DMY" \| "YMD"` | `"auto"` | Numeric parsing preference |
 | `locale` | `string` | `"en-US"` | Used when `dateOrder="auto"` |
@@ -86,7 +88,7 @@ The package also exports parser helpers:
 
 `buildDateSuggestions` supports options like:
 
-- `mode`, `favor`, `timezone`, `dateOrder`, `locale`
+- `mode`, `timeFavor`, `dayFavor`, `timezone`, `dateOrder`, `locale`
 - `allowSeconds`, `allowMilliseconds`
 - `includeDefaultOption` (default `true`)
 - `defaultDate` (default: `now`)

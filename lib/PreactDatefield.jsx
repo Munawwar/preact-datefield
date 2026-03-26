@@ -11,9 +11,9 @@ import {
 } from "preact/hooks";
 import OptionsListbox from "./OptionsListbox.jsx";
 import TraySearchList from "./TraySearchList.jsx";
+import { buildDateSuggestions, isoToDisplayLabel } from "./dateParser.js";
 import { subscribeToVirtualKeyboard, useLive } from "./hooks.js";
 import { toHTMLId } from "./utils.jsx";
-import { buildDateSuggestions, isoToDisplayLabel } from "./dateParser.js";
 import "./PreactDatefield.css";
 
 // --- types ---
@@ -346,9 +346,7 @@ const PreactDatefield = ({
       // Resolve display label from the suggestion
       const match = suggestions.find((s) => s.value === selectedValue);
       if (match) {
-        const label = labelFormatter
-          ? labelFormatter(match)
-          : match.label;
+        const label = labelFormatter ? labelFormatter(match) : match.label;
         setInputValue(label);
         setAnnouncement(`Selected ${label}`);
       }
@@ -692,9 +690,7 @@ const PreactDatefield = ({
           aria-haspopup="listbox"
           aria-controls={`${id}-options-listbox`}
           aria-activedescendant={
-            activeDescendantValue
-              ? `${id}-option-${toHTMLId(activeDescendantValue)}`
-              : undefined
+            activeDescendantValue ? `${id}-option-${toHTMLId(activeDescendantValue)}` : undefined
           }
           autocomplete="off"
           disabled={disabled}
@@ -713,9 +709,7 @@ const PreactDatefield = ({
         ) : null}
         {defaultChevronIcon}
 
-        {formSubmitCompatible ? (
-          <input type="hidden" name={name} value={value || ""} />
-        ) : null}
+        {formSubmitCompatible ? <input type="hidden" name={name} value={value || ""} /> : null}
       </div>
 
       <Portal parent={portal} rootElementRef={rootElementRef}>

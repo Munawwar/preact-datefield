@@ -68,6 +68,17 @@ test("Case 2: supported forms 6p / 6pm / 18:00", () => {
   assert.equal(first("18:00", { mode: "datetime" })?.label, "Mar 24, 2026 - 6:00 PM (Asia/Dubai)");
 });
 
+test("empty input shows default option unless disabled", () => {
+  assert.deepEqual(labels("", { mode: "date" }), ["Mar 24, 2026"]);
+  assert.deepEqual(labels("", { mode: "datetime", favor: "start" }), [
+    "Mar 24, 2026 - start of day (Asia/Dubai)",
+  ]);
+  assert.deepEqual(labels("", { mode: "datetime", favor: "end" }), [
+    "Mar 24, 2026 - end of day (Asia/Dubai)",
+  ]);
+  assert.deepEqual(labels("", { mode: "date", includeDefaultOption: false }), []);
+});
+
 test("seconds/milliseconds are disabled by default", () => {
   assert.deepEqual(labels("6:00:30", { mode: "datetime" }), []);
   assert.deepEqual(labels("6:00:30.250", { mode: "datetime" }), []);
@@ -101,6 +112,25 @@ test("numeric date ambiguity is controlled by dateOrder and locale", () => {
   assert.deepEqual(autoGB, ["Jun 3, 2026", "Mar 6, 2026"]);
 });
 
+test("DMY default and short year parsing", () => {
+  const out = buildDateSuggestions("03/06/26", {
+    timezone: "Asia/Dubai",
+    now: NOW,
+    mode: "date",
+    locale: "en-US",
+  });
+  assert.equal(out[0]?.label, "Jun 3, 2026");
+  assert.equal(out[0]?.value, "2026-06-03");
+
+  const outCurrentYear = buildDateSuggestions("03/06", {
+    timezone: "Asia/Dubai",
+    now: NOW,
+    mode: "date",
+    locale: "en-US",
+  });
+  assert.equal(outCurrentYear[0]?.label, "Jun 3, 2026");
+});
+
 test("year handling defaults and year-only behavior", () => {
   assert.equal(first("March 6", { mode: "date" })?.label, "Mar 6, 2026");
 
@@ -117,6 +147,20 @@ test("year handling defaults and year-only behavior", () => {
   assert.equal(end.inferredBoundary, "endOfYear");
 });
 
+test("YYYY-MM infers month boundary in datetime mode", () => {
+  const start = first("2026-03", { mode: "datetime", favor: "start" });
+  assert.ok(start);
+  assert.equal(start.label, "Mar 1, 2026 - start of month (Asia/Dubai)");
+  assert.equal(start.value, "2026-02-28T20:00:00.000Z");
+  assert.equal(start.inferredBoundary, "startOfMonth");
+
+  const end = first("2026-03", { mode: "datetime", favor: "end" });
+  assert.ok(end);
+  assert.equal(end.label, "Mar 31, 2026 - end of month (Asia/Dubai)");
+  assert.equal(end.value, "2026-03-31T19:59:59.999Z");
+  assert.equal(end.inferredBoundary, "endOfMonth");
+});
+
 test("invalid dates return no options", () => {
   assert.deepEqual(labels("Feb 30", { mode: "date" }), []);
   assert.deepEqual(labels("Apr 31", { mode: "date" }), []);
@@ -127,6 +171,12 @@ test("invalid dates return no options", () => {
 test("disambiguation: bare 18 is day-of-month and extra tokens are ignored", () => {
   assert.equal(first("18", { mode: "datetime" })?.label, "Mar 18, 2026 - start of day (Asia/Dubai)");
   assert.equal(first("18 18", { mode: "datetime" })?.label, "Mar 18, 2026 - start of day (Asia/Dubai)");
+});
+
+test("ordinal day suffixes are ignored", () => {
+  assert.equal(first("3rd march", { mode: "date" })?.label, "Mar 3, 2026");
+  assert.equal(first("4th may", { mode: "date" })?.label, "May 4, 2026");
+  assert.equal(first("1st jan 26", { mode: "date" })?.label, "Jan 1, 2026");
 });
 
 test("ranking: explicit time should not produce inferred start/end-of-day options", () => {

@@ -55,9 +55,11 @@ export type DateParserOptions = {
     dateOrder?: DateOrder | undefined;
     allowSeconds?: boolean | undefined;
     allowMilliseconds?: boolean | undefined;
+    includeDefaultOption?: boolean | undefined;
+    defaultDate?: Date | undefined;
     maxOptions?: number | undefined;
 };
-export type InferredBoundary = "none" | "startOfDay" | "endOfDay" | "startOfYear" | "endOfYear";
+export type InferredBoundary = "none" | "startOfDay" | "endOfDay" | "startOfMonth" | "endOfMonth" | "startOfYear" | "endOfYear";
 export type DateSuggestion = {
     label: string;
     value: string;

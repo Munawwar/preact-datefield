@@ -2710,6 +2710,17 @@ function toInt(token) {
   const value = Number(token);
   return Number.isNaN(value) ? null : value;
 }
+function toDayNumber(token) {
+  const asInt = toInt(token);
+  if (asInt !== null) return asInt >= 1 && asInt <= 31 ? asInt : null;
+  const ordinalMatch = token.toLowerCase().match(/^(\d{1,2})([a-z]{1,4})$/);
+  if (!ordinalMatch) return null;
+  const suffix = ordinalMatch[2] || "";
+  if (suffix === "a" || suffix === "am" || suffix === "p" || suffix === "pm") return null;
+  const day = Number(ordinalMatch[1]);
+  if (Number.isNaN(day) || day < 1 || day > 31) return null;
+  return day;
+}
 function pad(value, size = 2) {
   return String(value).padStart(size, "0");
 }
@@ -2717,6 +2728,9 @@ function isValidDate(year, month, day) {
   if (month < 1 || month > 12 || day < 1 || day > 31) return false;
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+function daysInMonth(year, month) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 function monthMatches(token) {
   if (!token || !/^[a-z]+$/.test(token)) return [];
@@ -2740,9 +2754,15 @@ function resolveDateOrder(dateOrder, locale) {
   if (dateOrder && dateOrder !== "auto") return dateOrder;
   const parts = new Intl.DateTimeFormat(locale || "en-US").formatToParts(new Date(Date.UTC(2006, 0, 2))).filter((part) => part.type === "year" || part.type === "month" || part.type === "day").map((part) => part.type);
   const joined = parts.join("-");
+  if (joined === "month-day-year") return "MDY";
   if (joined === "day-month-year") return "DMY";
   if (joined === "year-month-day") return "YMD";
-  return "MDY";
+  return "DMY";
+}
+function normalizeYear(year) {
+  if (year >= 1e3 && year <= 9999) return year;
+  if (year >= 0 && year <= 99) return 2e3 + year;
+  return null;
 }
 function getPairMonthDay(first, second, resolvedOrder) {
   if (first < 1 || second < 1 || first > 31 || second > 31) return [];
@@ -2875,6 +2895,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
   const separated = [];
   const monthWordTokens = [];
   const numericTokens = [];
+  const dayTokens = [];
   for (let i4 = 0; i4 < tokens.length; i4 += 1) {
     if (consumedTimeIndices.has(i4)) continue;
     const token = normalizeToken(tokens[i4] || "");
@@ -2894,6 +2915,8 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
       monthWordTokens.push({ index: i4, months });
       continue;
     }
+    const day = toDayNumber(token);
+    if (day !== null) dayTokens.push({ index: i4, value: day });
     const numeric = toInt(token);
     if (numeric !== null) numericTokens.push({ index: i4, value: numeric });
   }
@@ -2917,12 +2940,13 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
         );
         continue;
       }
-      if (c3 >= 1e3 && c3 <= 9999) {
+      const normalizedYear = normalizeYear(c3);
+      if (normalizedYear !== null) {
         const pairs2 = getPairMonthDay(a3, b2, resolvedOrder);
         for (const pair of pairs2) {
           addDateCandidate(
             out,
-            c3,
+            normalizedYear,
             pair.month,
             pair.day,
             /* @__PURE__ */ new Set([index]),
@@ -2936,6 +2960,24 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
           );
         }
       }
+      continue;
+    }
+    if (a3 >= 1e3 && a3 <= 9999 && b2 >= 1 && b2 <= 12) {
+      const day = favor === "end" ? daysInMonth(a3, b2) : 1;
+      addDateCandidate(
+        out,
+        a3,
+        b2,
+        day,
+        /* @__PURE__ */ new Set([index]),
+        true,
+        true,
+        false,
+        false,
+        0,
+        false,
+        favor === "end" ? "endOfMonth" : "startOfMonth"
+      );
       continue;
     }
     const pairs = getPairMonthDay(a3, b2, resolvedOrder);
@@ -2956,14 +2998,17 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
       );
     }
   }
-  const dayNumbers = numericTokens.filter((token) => token.value >= 1 && token.value <= 31);
+  const dayNumbers = dayTokens;
   const yearNumbers = numericTokens.filter((token) => token.value >= 1e3 && token.value <= 9999);
+  const shortYearNumbers = numericTokens.filter((token) => token.value >= 0 && token.value <= 99).map((token) => ({ index: token.index, value: 2e3 + token.value }));
+  const candidateYearNumbers = [...yearNumbers, ...shortYearNumbers];
   if (monthWordTokens.length && dayNumbers.length) {
     for (const monthToken of monthWordTokens) {
       for (const monthItem of monthToken.months) {
         for (const dayToken of dayNumbers) {
-          if (yearNumbers.length) {
-            for (const yearToken of yearNumbers) {
+          const years = candidateYearNumbers.filter((token) => token.index !== dayToken.index);
+          if (years.length) {
+            for (const yearToken of years) {
               addDateCandidate(
                 out,
                 yearToken.value,
@@ -3022,7 +3067,9 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, fa
     if (nonYear.length >= 2) {
       const first = nonYear[0];
       const second = nonYear[1];
-      const firstYear = yearNumbers[0] || null;
+      const firstYear = yearNumbers[0] || (nonYear.length >= 3 ? shortYearNumbers.find(
+        (token) => token.index !== first?.index && token.index !== second?.index
+      ) || null : null);
       if (first && second) {
         const inferredYear = firstYear ? firstYear.value : now.getFullYear();
         const pairs = getPairMonthDay(first.value, second.value, resolvedOrder);
@@ -3163,17 +3210,73 @@ function toDateTimeValue(year, month, day, hour, minute, second, millisecond, ti
   }
   return new Date(Date.UTC(year, month - 1, day, hour, minute, second, millisecond)).toISOString();
 }
+function buildDefaultSuggestion(mode, favor, timezone, defaultDate) {
+  const year = defaultDate.getFullYear();
+  const month = defaultDate.getMonth() + 1;
+  const day = defaultDate.getDate();
+  if (mode === "date") {
+    return {
+      label: toDateLabel(year, month, day),
+      value: toDateValue(year, month, day),
+      score: -1e3,
+      timezone,
+      mode,
+      inferredBoundary: "none",
+      inferredYear: true,
+      inferredMonth: true,
+      inferredDay: true,
+      inferredTime: true,
+      year,
+      month,
+      day,
+      hour: 0,
+      minute: 0,
+      second: 0,
+      millisecond: 0
+    };
+  }
+  const isEnd = favor === "end";
+  const hour = isEnd ? 23 : 0;
+  const minute = isEnd ? 59 : 0;
+  const second = isEnd ? 59 : 0;
+  const millisecond = isEnd ? 999 : 0;
+  const inferredBoundary = isEnd ? "endOfDay" : "startOfDay";
+  return {
+    label: `${toDateLabel(year, month, day)} - ${isEnd ? "end of day" : "start of day"} (${timezone})`,
+    value: toDateTimeValue(year, month, day, hour, minute, second, millisecond, timezone),
+    score: -1e3,
+    timezone,
+    mode,
+    inferredBoundary,
+    inferredYear: true,
+    inferredMonth: true,
+    inferredDay: true,
+    inferredTime: true,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    second,
+    millisecond
+  };
+}
 function buildDateSuggestions(input, options = {}) {
   const normalizedInput = normalizeInput(input || "");
-  if (!normalizedInput) return [];
   const mode = options.mode || "date";
   const favor = options.favor || "start";
   const now = options.now || /* @__PURE__ */ new Date();
+  const defaultDate = options.defaultDate || now;
+  const includeDefaultOption = options.includeDefaultOption !== false;
   const timezone = options.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const resolvedOrder = resolveDateOrder(options.dateOrder || "auto", options.locale || "en-US");
+  const resolvedOrder = resolveDateOrder(options.dateOrder || "DMY", options.locale || "en-US");
   const allowSeconds = Boolean(options.allowSeconds);
   const allowMilliseconds = Boolean(options.allowMilliseconds);
   const maxOptions = Math.max(1, options.maxOptions || 10);
+  if (!normalizedInput) {
+    if (!includeDefaultOption) return [];
+    return [buildDefaultSuggestion(mode, favor, timezone, defaultDate)];
+  }
   const tokens = normalizedInput.split(" ").filter(Boolean);
   const timeCandidates = parseTimeCandidates(tokens, allowSeconds, allowMilliseconds);
   const consumedTimeIndices = /* @__PURE__ */ new Set();
@@ -3303,7 +3406,7 @@ function buildDateSuggestions(input, options = {}) {
     );
     if (seen.has(value)) continue;
     seen.add(value);
-    const boundaryLabel = inferredBoundary === "startOfDay" ? "start of day" : inferredBoundary === "endOfDay" ? "end of day" : inferredBoundary === "startOfYear" ? "start of year" : "end of year";
+    const boundaryLabel = inferredBoundary === "startOfDay" ? "start of day" : inferredBoundary === "endOfDay" ? "end of day" : inferredBoundary === "startOfMonth" ? "start of month" : inferredBoundary === "endOfMonth" ? "end of month" : inferredBoundary === "startOfYear" ? "start of year" : "end of year";
     const label = `${toDateLabel(dateCandidate.year, dateCandidate.month, dateCandidate.day)} - ${boundaryLabel} (${timezone})`;
     suggestions.push({
       label,

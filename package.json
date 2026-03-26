@@ -39,7 +39,14 @@
   ],
   "author": "Munawwar",
   "license": "MIT",
-  "repository": "https://github.com/Munawwar/preact-datefield",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Munawwar/preact-datefield.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Munawwar/preact-datefield/issues"
+  },
+  "homepage": "https://github.com/Munawwar/preact-datefield",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@popperjs/core": "^2.0.0",

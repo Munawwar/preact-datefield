@@ -251,25 +251,15 @@ function App() {
   return html`
     <div>
       <${DateOnlyExample} theme=${theme} />
-      <hr />
       <${DatetimeFavorStartExample} theme=${theme} />
-      <hr />
       <${DatetimeFavorEndExample} theme=${theme} />
-      <hr />
       <${DMYExample} theme=${theme} />
-      <hr />
       <${RequiredFieldExample} theme=${theme} />
-      <hr />
       <${DisabledExample} theme=${theme} />
-      <hr />
       <${ProgrammaticExample} theme=${theme} />
-      <hr />
       <${SecondsExample} theme=${theme} />
-      <hr />
       <${CustomFormatterExample} theme=${theme} />
-      <hr />
       <${FormSubmitExample} theme=${theme} />
-      <hr />
       <${DarkThemeExample} />
     </div>
   `;

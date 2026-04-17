@@ -613,15 +613,29 @@ const PreactDatefield = ({
     [inputValue, displayLabel, getIsDropdownOpen, setIsDropdownOpen, closeDropdown],
   );
 
-  const handleClearValue = useCallback(() => {
-    setInputValue("");
-    onChange("");
-    setAnnouncement("Date cleared");
-    if (inputRef.current) {
-      inputRef.current.setCustomValidity(required ? "Please select a date" : "");
-    }
-    if (getIsFocused()) focusInput();
-  }, [onChange, required, getIsFocused, focusInput]);
+  const handleClearValue = useCallback(
+    /** @param {import('preact/compat').MouseEvent<HTMLButtonElement>} e */
+    (e) => {
+      // Prevent the click on the clear button to focus on the input on
+      // mobile which opens up the keyboard and mobile tray.
+      e.stopPropagation();
+      setInputValue("");
+      onChange("");
+      setAnnouncement("Date cleared");
+      if (inputRef.current) {
+        inputRef.current.setCustomValidity(required ? "Please select a date" : "");
+      }
+    },
+    [onChange, required],
+  );
+
+  const handleClearMouseDown = useCallback(
+    /** @param {import('preact/compat').MouseEvent<HTMLButtonElement>} e */
+    (e) => {
+      e.preventDefault();
+    },
+    [],
+  );
 
   const handleRootElementClick = useCallback(() => {
     if (disabled) return;
@@ -734,6 +748,7 @@ const PreactDatefield = ({
             type="button"
             className="PreactDatefield-clearButton"
             aria-label={defaultTranslations.clearValue}
+            onMouseDown={handleClearMouseDown}
             onClick={handleClearValue}
           >
             <span aria-hidden="true">&#x2715;</span>

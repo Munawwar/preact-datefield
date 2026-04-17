@@ -4191,15 +4191,26 @@ var PreactDatefield = ({
     },
     [inputValue, displayLabel, getIsDropdownOpen, setIsDropdownOpen, closeDropdown]
   );
-  const handleClearValue = q2(() => {
-    setInputValue("");
-    onChange("");
-    setAnnouncement("Date cleared");
-    if (inputRef.current) {
-      inputRef.current.setCustomValidity(required ? "Please select a date" : "");
-    }
-    if (getIsFocused()) focusInput();
-  }, [onChange, required, getIsFocused, focusInput]);
+  const handleClearValue = q2(
+    /** @param {import('preact/compat').MouseEvent<HTMLButtonElement>} e */
+    (e3) => {
+      e3.stopPropagation();
+      setInputValue("");
+      onChange("");
+      setAnnouncement("Date cleared");
+      if (inputRef.current) {
+        inputRef.current.setCustomValidity(required ? "Please select a date" : "");
+      }
+    },
+    [onChange, required]
+  );
+  const handleClearMouseDown = q2(
+    /** @param {import('preact/compat').MouseEvent<HTMLButtonElement>} e */
+    (e3) => {
+      e3.preventDefault();
+    },
+    []
+  );
   const handleRootElementClick = q2(() => {
     if (disabled) return;
     if (shouldUseTray) {
@@ -4299,6 +4310,7 @@ var PreactDatefield = ({
               type: "button",
               className: "PreactDatefield-clearButton",
               "aria-label": defaultTranslations.clearValue,
+              onMouseDown: handleClearMouseDown,
               onClick: handleClearValue,
               children: /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "\u2715" })
             }

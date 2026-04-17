@@ -2784,8 +2784,12 @@ function monthMatches(token) {
     const full = MONTH_KEYS[i4] || "";
     const short = MONTH_SHORT_KEYS[i4] || "";
     if (full.startsWith(token) || short.startsWith(token)) {
-      out.push({ month: i4 + 1, partial: token !== full && token !== short });
+      out.push({ month: i4 + 1, partial: token !== full && token !== short, matchPenalty: 0 });
     }
+  }
+  if (out.length || token.length < 4) return out;
+  for (const match of fuzzyWordMatches(token, MONTH_KEYS)) {
+    out.push({ month: match.index + 1, partial: true, matchPenalty: match.distance + 1 });
   }
   return out;
 }
@@ -2804,8 +2808,50 @@ function weekdayMatches(token) {
     }
     if (!matches) continue;
     const isExact = full === token || aliases.includes(token);
-    out.push({ weekday: i4, partial: !isExact });
+    out.push({ weekday: i4, partial: !isExact, matchPenalty: 0 });
   }
+  if (out.length || token.length < 4) return out;
+  for (const match of fuzzyWordMatches(token, WEEKDAY_KEYS)) {
+    out.push({ weekday: match.index, partial: true, matchPenalty: match.distance + 1 });
+  }
+  return out;
+}
+function maxTypoDistance(keyLength) {
+  return keyLength >= 8 ? 2 : 1;
+}
+function damerauLevenshtein(a3, b2) {
+  const rows = a3.length + 1;
+  const cols = b2.length + 1;
+  const matrix = new Uint16Array(rows * cols);
+  for (let i4 = 0; i4 < rows; i4 += 1) matrix[i4 * cols] = i4;
+  for (let j4 = 0; j4 < cols; j4 += 1) matrix[j4] = j4;
+  for (let i4 = 1; i4 < rows; i4 += 1) {
+    for (let j4 = 1; j4 < cols; j4 += 1) {
+      const cell = i4 * cols + j4;
+      const substitutionCost = a3[i4 - 1] === b2[j4 - 1] ? 0 : 1;
+      let dist = Math.min(
+        (matrix[cell - cols] ?? 0) + 1,
+        (matrix[cell - 1] ?? 0) + 1,
+        (matrix[cell - cols - 1] ?? 0) + substitutionCost
+      );
+      if (i4 > 1 && j4 > 1 && a3[i4 - 1] === b2[j4 - 2] && a3[i4 - 2] === b2[j4 - 1]) {
+        dist = Math.min(dist, (matrix[cell - cols * 2 - 2] ?? 0) + 1);
+      }
+      matrix[cell] = dist;
+    }
+  }
+  return matrix[rows * cols - 1] ?? 0;
+}
+function fuzzyWordMatches(token, keys) {
+  const out = [];
+  for (let i4 = 0; i4 < keys.length; i4 += 1) {
+    const key = keys[i4];
+    if (!key) continue;
+    const distance = damerauLevenshtein(token, key);
+    if (distance > maxTypoDistance(key.length)) continue;
+    out.push({ index: i4, distance });
+  }
+  out.sort((a3, b2) => a3.distance - b2.distance || a3.index - b2.index);
   return out;
 }
 function parseMeridiem(token) {
@@ -3133,7 +3179,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, ti
                 true,
                 true,
                 false,
-                0,
+                monthItem.matchPenalty,
                 monthItem.partial,
                 "none"
               );
@@ -3150,7 +3196,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, ti
             true,
             true,
             false,
-            0,
+            monthItem.matchPenalty,
             monthItem.partial,
             "none"
           );
@@ -3246,7 +3292,7 @@ function parseDateCandidates(tokens, consumedTimeIndices, now, resolvedOrder, ti
               false,
               false,
               false,
-              orderPenalty,
+              orderPenalty + weekdayItem.matchPenalty,
               weekdayItem.partial,
               "none",
               weekdayItem.weekday

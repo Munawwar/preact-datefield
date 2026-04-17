@@ -207,6 +207,11 @@ test("ordinal day suffixes are ignored", () => {
   assert.equal(first("1st jan 26", { mode: "date" })?.label, "Jan 1, 2026");
 });
 
+test("english typo correction for month and weekday words", () => {
+  assert.equal(first("firday", { mode: "date" })?.label, "Past Friday, Mar 20, 2026");
+  assert.equal(first("febuary 29 2024", { mode: "date" })?.label, "Feb 29, 2024");
+});
+
 test("ranking: explicit time should not produce inferred start/end-of-day options", () => {
   const out = labels("Mar 6 6pm", { mode: "datetime" });
   assert.equal(out[0], "Mar 6, 2026 - 6:00 PM (Asia/Dubai)");

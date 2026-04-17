@@ -27,6 +27,40 @@ function DateOnlyExample({ theme }) {
   `;
 }
 
+function DateRangeExample({ theme }) {
+  const [fromValue, setFromValue] = useState("");
+  const [toValue, setToValue] = useState("");
+  return html`
+    <div class="section">
+      <label>Date Range (linked min/max)</label>
+      <label for="range-from" style="font-size: 14px; font-weight: 500;">From</label>
+      <${PreactDatefield}
+        id="range-from"
+        mode="date"
+        theme=${theme}
+        value=${fromValue}
+        onChange=${setFromValue}
+        maxValue=${toValue}
+        bounds="inclusive"
+        placeholder="Start date"
+      />
+      <${ValueDisplay} value=${fromValue} />
+      <label for="range-to" style="font-size: 14px; font-weight: 500;">To</label>
+      <${PreactDatefield}
+        id="range-to"
+        mode="date"
+        theme=${theme}
+        value=${toValue}
+        onChange=${setToValue}
+        minValue=${fromValue}
+        bounds="inclusive"
+        placeholder="End date"
+      />
+      <${ValueDisplay} value=${toValue} />
+    </div>
+  `;
+}
+
 function DatetimeFavorStartExample({ theme }) {
   const [value, setValue] = useState("");
   return html`
@@ -251,6 +285,7 @@ function App() {
   return html`
     <div>
       <${DateOnlyExample} theme=${theme} />
+      <${DateRangeExample} theme=${theme} />
       <${DatetimeFavorStartExample} theme=${theme} />
       <${DatetimeFavorEndExample} theme=${theme} />
       <${DMYExample} theme=${theme} />

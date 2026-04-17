@@ -713,7 +713,8 @@ function parseMeridiem(token) {
 }
 function resolveDateOrder(dateOrder, locale) {
   if (dateOrder && dateOrder !== "auto") return dateOrder;
-  const parts = new Intl.DateTimeFormat(locale || "en-US").formatToParts(new Date(Date.UTC(2006, 0, 2))).filter((part) => part.type === "year" || part.type === "month" || part.type === "day").map((part) => part.type);
+  if (!locale) return "DMY";
+  const parts = new Intl.DateTimeFormat(locale).formatToParts(new Date(Date.UTC(2006, 0, 2))).filter((part) => part.type === "year" || part.type === "month" || part.type === "day").map((part) => part.type);
   const joined = parts.join("-");
   if (joined === "month-day-year") return "MDY";
   if (joined === "day-month-year") return "DMY";
@@ -1276,6 +1277,34 @@ function toDateTimeValue(year, month, day, hour, minute, second, millisecond, ti
   }
   return new Date(Date.UTC(year, month - 1, day, hour, minute, second, millisecond)).toISOString();
 }
+function toComparableValue(value, mode) {
+  if (!value) return null;
+  if (mode === "date") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (!isValidDate(year, month, day)) return null;
+    return Date.UTC(year, month - 1, day);
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.getTime();
+}
+function suggestionComparableValue(suggestion) {
+  return suggestion.mode === "date" ? Date.UTC(suggestion.year, suggestion.month - 1, suggestion.day) : new Date(suggestion.value).getTime();
+}
+function isWithinBounds(suggestion, minComparable, maxComparable, bounds) {
+  const value = suggestionComparableValue(suggestion);
+  if (Number.isNaN(value)) return false;
+  if (minComparable !== null) {
+    if (bounds === "exclusive" ? value <= minComparable : value < minComparable) return false;
+  }
+  if (maxComparable !== null) {
+    if (bounds === "exclusive" ? value >= maxComparable : value > maxComparable) return false;
+  }
+  return true;
+}
 function buildDefaultSuggestion(mode, timeFavor, timezone, defaultDate) {
   const year = defaultDate.getFullYear();
   const month = defaultDate.getMonth() + 1;
@@ -1336,13 +1365,20 @@ function buildDateSuggestions(input, options = {}) {
   const defaultDate = options.defaultDate || now;
   const includeDefaultOption = options.includeDefaultOption !== false;
   const timezone = options.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const resolvedOrder = resolveDateOrder(options.dateOrder || "DMY", options.locale || "en-US");
+  const resolvedOrder = resolveDateOrder(options.dateOrder || "DMY", options.locale);
   const allowSeconds = Boolean(options.allowSeconds);
   const allowMilliseconds = Boolean(options.allowMilliseconds);
+  const bounds = options.bounds === "exclusive" ? "exclusive" : "inclusive";
+  const minComparable = toComparableValue(options.minValue, mode);
+  const maxComparable = toComparableValue(options.maxValue, mode);
   const maxOptions = Math.max(1, options.maxOptions || 10);
+  if (minComparable !== null && maxComparable !== null && (bounds === "exclusive" ? minComparable >= maxComparable : minComparable > maxComparable)) {
+    return [];
+  }
   if (!normalizedInput) {
     if (!includeDefaultOption) return [];
-    return [buildDefaultSuggestion(mode, timeFavor, timezone, defaultDate)];
+    const defaultSuggestion = buildDefaultSuggestion(mode, timeFavor, timezone, defaultDate);
+    return isWithinBounds(defaultSuggestion, minComparable, maxComparable, bounds) ? [defaultSuggestion] : [];
   }
   const tokens = normalizedInput.split(" ").filter(Boolean);
   const timeCandidates = parseTimeCandidates(tokens, allowSeconds, allowMilliseconds);
@@ -1504,10 +1540,13 @@ function buildDateSuggestions(input, options = {}) {
       millisecond
     });
   }
-  suggestions.sort(
+  const boundedSuggestions = suggestions.filter(
+    (suggestion) => isWithinBounds(suggestion, minComparable, maxComparable, bounds)
+  );
+  boundedSuggestions.sort(
     (a, b) => b.score - a.score || a.year - b.year || a.month - b.month || a.day - b.day || a.hour - b.hour || a.minute - b.minute || a.second - b.second || a.millisecond - b.millisecond || a.label.localeCompare(b.label)
   );
-  return suggestions.slice(0, maxOptions);
+  return boundedSuggestions.slice(0, maxOptions);
 }
 function isoToDisplayLabel(value, options = {}) {
   if (!value) return "";
@@ -1666,6 +1705,9 @@ var PreactDatefield = ({
   locale = "en-US",
   allowSeconds = false,
   allowMilliseconds = false,
+  minValue,
+  maxValue,
+  bounds = "inclusive",
   labelFormatter,
   placeholder = "",
   required = false,
@@ -1748,6 +1790,9 @@ var PreactDatefield = ({
       locale,
       allowSeconds,
       allowMilliseconds,
+      minValue,
+      maxValue,
+      bounds,
       maxOptions: maxSuggestions
     }),
     [
@@ -1759,6 +1804,9 @@ var PreactDatefield = ({
       locale,
       allowSeconds,
       allowMilliseconds,
+      minValue,
+      maxValue,
+      bounds,
       maxSuggestions
     ]
   );

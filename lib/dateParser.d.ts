@@ -46,6 +46,7 @@ export function validateDateInput(input: string, options?: ValidateDateInputOpti
 export type DateParserMode = "date" | "datetime";
 export type DateBoundaryPreference = "start" | "end";
 export type DateDayPreference = "past" | "future";
+export type DateBounds = "inclusive" | "exclusive";
 export type DateOrder = "auto" | "MDY" | "DMY" | "YMD";
 export type DateParserOptions = {
     mode?: DateParserMode | undefined;
@@ -59,6 +60,9 @@ export type DateParserOptions = {
     allowMilliseconds?: boolean | undefined;
     includeDefaultOption?: boolean | undefined;
     defaultDate?: Date | undefined;
+    minValue?: string | undefined;
+    maxValue?: string | undefined;
+    bounds?: DateBounds | undefined;
     maxOptions?: number | undefined;
 };
 export type InferredBoundary = "none" | "startOfDay" | "endOfDay" | "startOfMonth" | "endOfMonth" | "startOfYear" | "endOfYear";
@@ -92,6 +96,9 @@ export type ValidateDateInputOptions = {
     dateOrder?: DateOrder | undefined;
     allowSeconds?: boolean | undefined;
     allowMilliseconds?: boolean | undefined;
+    minValue?: string | undefined;
+    maxValue?: string | undefined;
+    bounds?: DateBounds | undefined;
     maxOptions?: number | undefined;
 };
 export type ValidateDateInputResult = {

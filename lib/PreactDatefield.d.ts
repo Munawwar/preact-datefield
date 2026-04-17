@@ -3,6 +3,7 @@ export type DateSuggestion = import("./dateParser.js").DateSuggestion;
 export type DateParserMode = import("./dateParser.js").DateParserMode;
 export type DateBoundaryPreference = import("./dateParser.js").DateBoundaryPreference;
 export type DateDayPreference = import("./dateParser.js").DateDayPreference;
+export type DateBounds = import("./dateParser.js").DateBounds;
 export type DateOrder = import("./dateParser.js").DateOrder;
 export type PreactDatefieldProps = {
     /**
@@ -65,6 +66,18 @@ export type PreactDatefieldProps = {
      * Allow milliseconds in time input
      */
     allowMilliseconds?: boolean | undefined;
+    /**
+     * Minimum allowed ISO value
+     */
+    minValue?: string | undefined;
+    /**
+     * Maximum allowed ISO value
+     */
+    maxValue?: string | undefined;
+    /**
+     * Range bounds behavior for min/max
+     */
+    bounds?: import("./dateParser.js").DateBounds | undefined;
     /**
      * Custom display label formatter
      */
@@ -142,5 +155,5 @@ export type Translations = {
  * PreactDatefield component - a date input with autocomplete suggestions
  * @param {PreactDatefieldProps} props
  */
-declare function PreactDatefield({ id: idProp, name, className, value, onChange, onBlur: onBlurProp, mode, timeFavor, favor, dayFavor, timezone: timezoneProp, dateOrder, locale, allowSeconds, allowMilliseconds, labelFormatter, placeholder, required, disabled, formSubmitCompatible, theme, tray, trayBreakpoint, trayLabel: trayLabelProp, showClearButton, portal, rootElementProps, inputProps, maxSuggestions, }: PreactDatefieldProps): import("preact").JSX.Element;
+declare function PreactDatefield({ id: idProp, name, className, value, onChange, onBlur: onBlurProp, mode, timeFavor, favor, dayFavor, timezone: timezoneProp, dateOrder, locale, allowSeconds, allowMilliseconds, minValue, maxValue, bounds, labelFormatter, placeholder, required, disabled, formSubmitCompatible, theme, tray, trayBreakpoint, trayLabel: trayLabelProp, showClearButton, portal, rootElementProps, inputProps, maxSuggestions, }: PreactDatefieldProps): import("preact").JSX.Element;
 export { buildDateSuggestions, isoToDisplayLabel } from "./dateParser.js";

@@ -213,6 +213,39 @@ test("ranking: explicit time should not produce inferred start/end-of-day option
   assert.ok(!out.some((label) => label.includes("start of day") || label.includes("end of day")));
 });
 
+test("min/max bounds filter suggestions for date mode", () => {
+  assert.equal(first("Mar 6", { mode: "date", minValue: "2026-03-06" })?.value, "2026-03-06");
+  assert.equal(first("Mar 6", { mode: "date", minValue: "2026-03-06", bounds: "exclusive" }), null);
+  assert.equal(first("Mar 7", { mode: "date", maxValue: "2026-03-07" })?.value, "2026-03-07");
+  assert.equal(first("Mar 7", { mode: "date", maxValue: "2026-03-07", bounds: "exclusive" }), null);
+  assert.deepEqual(
+    labels("Mar 6", { mode: "date", minValue: "2026-03-10", maxValue: "2026-03-01" }),
+    [],
+  );
+});
+
+test("min/max bounds filter suggestions for datetime mode", () => {
+  const boundary = "2026-03-05T20:00:00.000Z";
+  assert.equal(
+    first("Mar 6", { mode: "datetime", timeFavor: "start", minValue: boundary })?.value,
+    boundary,
+  );
+  assert.equal(
+    first("Mar 6", {
+      mode: "datetime",
+      timeFavor: "start",
+      minValue: boundary,
+      bounds: "exclusive",
+    }),
+    null,
+  );
+});
+
+test("default option respects min/max bounds", () => {
+  assert.deepEqual(labels("", { mode: "date", minValue: "2026-03-24" }), ["Mar 24, 2026"]);
+  assert.deepEqual(labels("", { mode: "date", minValue: "2026-03-25" }), []);
+});
+
 test("validateDateInput is independent and UI-agnostic", () => {
   const valid = validateDateInput("Mar 6", { ...BASE, mode: "date", required: true });
   assert.equal(valid.isValid, true);

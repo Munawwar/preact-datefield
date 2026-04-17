@@ -21,6 +21,7 @@ import "./PreactDatefield.css";
 /** @typedef {import("./dateParser.js").DateParserMode} DateParserMode */
 /** @typedef {import("./dateParser.js").DateBoundaryPreference} DateBoundaryPreference */
 /** @typedef {import("./dateParser.js").DateDayPreference} DateDayPreference */
+/** @typedef {import("./dateParser.js").DateBounds} DateBounds */
 /** @typedef {import("./dateParser.js").DateOrder} DateOrder */
 
 /**
@@ -40,6 +41,9 @@ import "./PreactDatefield.css";
  * @property {string} [locale="en-US"] BCP 47 locale for dateOrder resolution
  * @property {boolean} [allowSeconds=false] Allow seconds in time input
  * @property {boolean} [allowMilliseconds=false] Allow milliseconds in time input
+ * @property {string} [minValue] Minimum allowed ISO value
+ * @property {string} [maxValue] Maximum allowed ISO value
+ * @property {DateBounds} [bounds="inclusive"] Range bounds behavior for min/max
  * @property {(parts: { year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, timezone: string, mode: DateParserMode }) => string} [labelFormatter] Custom display label formatter
  * @property {string} [placeholder] Input placeholder text
  * @property {boolean} [required=false] Required for form validation
@@ -182,6 +186,9 @@ const PreactDatefield = ({
   locale = "en-US",
   allowSeconds = false,
   allowMilliseconds = false,
+  minValue,
+  maxValue,
+  bounds = "inclusive",
   labelFormatter,
   placeholder = "",
   required = false,
@@ -263,6 +270,9 @@ const PreactDatefield = ({
       locale,
       allowSeconds,
       allowMilliseconds,
+      minValue,
+      maxValue,
+      bounds,
       maxOptions: maxSuggestions,
     }),
     [
@@ -274,6 +284,9 @@ const PreactDatefield = ({
       locale,
       allowSeconds,
       allowMilliseconds,
+      minValue,
+      maxValue,
+      bounds,
       maxSuggestions,
     ],
   );

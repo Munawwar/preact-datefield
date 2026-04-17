@@ -18,6 +18,7 @@ This project is not published to npm yet.
 - Timezone-aware datetime interpretation
 - Start/end boundary inference for partial input
 - DMY/MDY/YMD numeric date order controls
+- Min/max range constraints (`minValue`, `maxValue`, `bounds`)
 - Mobile tray mode
 - Form-compatible hidden input support
 
@@ -61,6 +62,9 @@ function App() {
 | `locale` | `string` | `"en-US"` | Used when `dateOrder="auto"` |
 | `allowSeconds` | `boolean` | `false` | Allow `HH:mm:ss` input |
 | `allowMilliseconds` | `boolean` | `false` | Allow milliseconds input |
+| `minValue` | `string` | `undefined` | Minimum allowed ISO value |
+| `maxValue` | `string` | `undefined` | Maximum allowed ISO value |
+| `bounds` | `"inclusive" \| "exclusive"` | `"inclusive"` | Applies to both min/max checks |
 | `labelFormatter` | `(parts) => string` | `undefined` | Custom display formatting |
 | `placeholder` | `string` | `""` | Input placeholder |
 | `required` | `boolean` | `false` | HTML required behavior |
@@ -90,6 +94,7 @@ The package also exports parser helpers:
 
 - `mode`, `timeFavor`, `dayFavor`, `timezone`, `dateOrder`, `locale`
 - `allowSeconds`, `allowMilliseconds`
+- `minValue`, `maxValue`, `bounds`
 - `includeDefaultOption` (default `true`)
 - `defaultDate` (default: `now`)
 - `maxOptions`

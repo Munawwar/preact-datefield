@@ -4,6 +4,8 @@ import htm from "htm";
 import PreactDatefield from "../dist/esm/PreactDatefield.js";
 
 const html = htm.bind(createElement);
+const dateFieldClass = "example-field example-field--date";
+const datetimeFieldClass = "example-field example-field--datetime";
 
 function ValueDisplay({ value }) {
   return html`<div class="value-display">Value: <code>${value || "(empty)"}</code></div>`;
@@ -18,6 +20,8 @@ function DateOnlyExample({ theme }) {
         id="date-only"
         mode="date"
         theme=${theme}
+        tray=${false}
+        className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
         placeholder="Try: Mar 6, 3/25, etc."
@@ -32,71 +36,89 @@ function DateRangeExample({ theme }) {
   const [toValue, setToValue] = useState("");
   return html`
     <div class="section">
-      <label>Date Range (linked min/max)</label>
-      <label for="range-from" style="font-size: 14px; font-weight: 500;">From</label>
-      <${PreactDatefield}
-        id="range-from"
-        mode="date"
-        theme=${theme}
-        value=${fromValue}
-        onChange=${setFromValue}
-        maxValue=${toValue}
-        bounds="inclusive"
-        placeholder="Start date"
-      />
-      <${ValueDisplay} value=${fromValue} />
-      <label for="range-to" style="font-size: 14px; font-weight: 500;">To</label>
-      <${PreactDatefield}
-        id="range-to"
-        mode="date"
-        theme=${theme}
-        value=${toValue}
-        onChange=${setToValue}
-        minValue=${fromValue}
-        bounds="inclusive"
-        placeholder="End date"
-      />
-      <${ValueDisplay} value=${toValue} />
+      <div class="section-title">Date Range (linked min/max)</div>
+      <div class="range-grid">
+        <div class="range-item">
+          <label class="range-sub-label" for="range-from">From</label>
+          <${PreactDatefield}
+            id="range-from"
+            mode="date"
+            theme=${theme}
+            tray=${false}
+            className=${dateFieldClass}
+            value=${fromValue}
+            onChange=${setFromValue}
+            maxValue=${toValue}
+            bounds="inclusive"
+            placeholder="Start date"
+          />
+          <${ValueDisplay} value=${fromValue} />
+        </div>
+        <div class="range-item">
+          <label class="range-sub-label" for="range-to">To</label>
+          <${PreactDatefield}
+            id="range-to"
+            mode="date"
+            theme=${theme}
+            tray=${false}
+            className=${dateFieldClass}
+            value=${toValue}
+            onChange=${setToValue}
+            minValue=${fromValue}
+            bounds="inclusive"
+            placeholder="End date"
+          />
+          <${ValueDisplay} value=${toValue} />
+        </div>
+      </div>
     </div>
   `;
 }
 
-function DatetimeFavorStartExample({ theme }) {
-  const [value, setValue] = useState("");
+function DatetimeRangeExample({ theme }) {
+  const [fromValue, setFromValue] = useState("");
+  const [toValue, setToValue] = useState("");
   return html`
     <div class="section">
-      <label for="dt-start">Datetime (favor start)</label>
-      <${PreactDatefield}
-        id="dt-start"
-        mode="datetime"
-        timeFavor="start"
-        timezone="Asia/Dubai"
-        theme=${theme}
-        value=${value}
-        onChange=${setValue}
-        placeholder="Try: Mar 6, 6pm, etc."
-      />
-      <${ValueDisplay} value=${value} />
-    </div>
-  `;
-}
-
-function DatetimeFavorEndExample({ theme }) {
-  const [value, setValue] = useState("");
-  return html`
-    <div class="section">
-      <label for="dt-end">Datetime (favor end)</label>
-      <${PreactDatefield}
-        id="dt-end"
-        mode="datetime"
-        timeFavor="end"
-        timezone="Asia/Dubai"
-        theme=${theme}
-        value=${value}
-        onChange=${setValue}
-        placeholder="Try: Mar 6, 6pm, etc."
-      />
-      <${ValueDisplay} value=${value} />
+      <div class="section-title">Datetime Range (start/end + min/max)</div>
+      <div class="range-grid">
+        <div class="range-item">
+          <label class="range-sub-label" for="dt-from">From</label>
+          <${PreactDatefield}
+            id="dt-from"
+            mode="datetime"
+            timeFavor="start"
+            timezone="Asia/Dubai"
+            theme=${theme}
+            tray=${false}
+            className=${datetimeFieldClass}
+            value=${fromValue}
+            onChange=${setFromValue}
+            maxValue=${toValue}
+            bounds="inclusive"
+            placeholder="Start datetime"
+          />
+          <${ValueDisplay} value=${fromValue} />
+        </div>
+        <div class="range-item">
+          <label class="range-sub-label" for="dt-to">To</label>
+          <${PreactDatefield}
+            id="dt-to"
+            mode="datetime"
+            timeFavor="end"
+            timezone="Asia/Dubai"
+            theme=${theme}
+            tray=${false}
+            className=${datetimeFieldClass}
+            value=${toValue}
+            onChange=${setToValue}
+            minValue=${fromValue}
+            bounds="inclusive"
+            placeholder="End datetime"
+          />
+          <${ValueDisplay} value=${toValue} />
+        </div>
+      </div>
     </div>
   `;
 }
@@ -111,6 +133,8 @@ function DMYExample({ theme }) {
         mode="date"
         dateOrder="DMY"
         theme=${theme}
+        tray=${false}
+        className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
         placeholder="Try: 3/6 (= June 3rd)"
@@ -130,6 +154,8 @@ function RequiredFieldExample({ theme }) {
           id="required-date"
           mode="date"
           theme=${theme}
+          tray=${false}
+          className=${dateFieldClass}
           value=${value}
           onChange=${setValue}
           required=${true}
@@ -150,6 +176,8 @@ function DisabledExample({ theme }) {
         id="disabled-date"
         mode="date"
         theme=${theme}
+        tray=${false}
+        className=${dateFieldClass}
         value="2026-03-25"
         onChange=${() => {}}
         disabled=${true}
@@ -168,6 +196,8 @@ function ProgrammaticExample({ theme }) {
         mode="datetime"
         timezone="America/New_York"
         theme=${theme}
+        tray=${false}
+        className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}
         placeholder="Click buttons below"
@@ -193,6 +223,8 @@ function SecondsExample({ theme }) {
         timezone="Asia/Dubai"
         allowSeconds=${true}
         theme=${theme}
+        tray=${false}
+        className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}
         placeholder="Try: 6:30:45 pm"
@@ -215,6 +247,8 @@ function CustomFormatterExample({ theme }) {
         mode="date"
         dateOrder="DMY"
         theme=${theme}
+        tray=${false}
+        className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
         labelFormatter=${formatter}
@@ -240,6 +274,8 @@ function FormSubmitExample({ theme }) {
           name="event-date"
           mode="date"
           theme=${theme}
+          tray=${false}
+          className=${dateFieldClass}
           value=${value}
           onChange=${setValue}
           formSubmitCompatible=${true}
@@ -248,6 +284,26 @@ function FormSubmitExample({ theme }) {
         <${ValueDisplay} value=${value} />
         <button type="submit" style="margin-top: 4px">Submit Form</button>
       </form>
+    </div>
+  `;
+}
+
+function TrayExample({ theme }) {
+  const [value, setValue] = useState("");
+  return html`
+    <div class="section">
+      <label for="tray-example">Mobile Tray (explicit)</label>
+      <${PreactDatefield}
+        id="tray-example"
+        mode="date"
+        theme=${theme}
+        tray=${true}
+        className=${dateFieldClass}
+        value=${value}
+        onChange=${setValue}
+        placeholder="Tray enabled explicitly"
+      />
+      <${ValueDisplay} value=${value} />
     </div>
   `;
 }
@@ -262,6 +318,8 @@ function DarkThemeExample() {
         mode="datetime"
         timezone="Asia/Dubai"
         theme="dark"
+        tray=${false}
+        className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}
         placeholder="Always dark"
@@ -286,9 +344,9 @@ function App() {
     <div>
       <${DateOnlyExample} theme=${theme} />
       <${DateRangeExample} theme=${theme} />
-      <${DatetimeFavorStartExample} theme=${theme} />
-      <${DatetimeFavorEndExample} theme=${theme} />
+      <${DatetimeRangeExample} theme=${theme} />
       <${DMYExample} theme=${theme} />
+      <${TrayExample} theme=${theme} />
       <${RequiredFieldExample} theme=${theme} />
       <${DisabledExample} theme=${theme} />
       <${ProgrammaticExample} theme=${theme} />

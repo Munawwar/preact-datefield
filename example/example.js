@@ -20,7 +20,6 @@ function DateOnlyExample({ theme }) {
         id="date-only"
         mode="date"
         theme=${theme}
-        tray=${false}
         className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
@@ -44,7 +43,6 @@ function DateRangeExample({ theme }) {
             id="range-from"
             mode="date"
             theme=${theme}
-            tray=${false}
             className=${dateFieldClass}
             value=${fromValue}
             onChange=${setFromValue}
@@ -60,7 +58,6 @@ function DateRangeExample({ theme }) {
             id="range-to"
             mode="date"
             theme=${theme}
-            tray=${false}
             className=${dateFieldClass}
             value=${toValue}
             onChange=${setToValue}
@@ -90,7 +87,6 @@ function DatetimeRangeExample({ theme }) {
             timeFavor="start"
             timezone="Asia/Dubai"
             theme=${theme}
-            tray=${false}
             className=${datetimeFieldClass}
             value=${fromValue}
             onChange=${setFromValue}
@@ -108,7 +104,6 @@ function DatetimeRangeExample({ theme }) {
             timeFavor="end"
             timezone="Asia/Dubai"
             theme=${theme}
-            tray=${false}
             className=${datetimeFieldClass}
             value=${toValue}
             onChange=${setToValue}
@@ -133,7 +128,6 @@ function DMYExample({ theme }) {
         mode="date"
         dateOrder="DMY"
         theme=${theme}
-        tray=${false}
         className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
@@ -154,7 +148,6 @@ function RequiredFieldExample({ theme }) {
           id="required-date"
           mode="date"
           theme=${theme}
-          tray=${false}
           className=${dateFieldClass}
           value=${value}
           onChange=${setValue}
@@ -176,7 +169,6 @@ function DisabledExample({ theme }) {
         id="disabled-date"
         mode="date"
         theme=${theme}
-        tray=${false}
         className=${dateFieldClass}
         value="2026-03-25"
         onChange=${() => {}}
@@ -196,7 +188,6 @@ function ProgrammaticExample({ theme }) {
         mode="datetime"
         timezone="America/New_York"
         theme=${theme}
-        tray=${false}
         className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}
@@ -223,7 +214,6 @@ function SecondsExample({ theme }) {
         timezone="Asia/Dubai"
         allowSeconds=${true}
         theme=${theme}
-        tray=${false}
         className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}
@@ -247,7 +237,6 @@ function CustomFormatterExample({ theme }) {
         mode="date"
         dateOrder="DMY"
         theme=${theme}
-        tray=${false}
         className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
@@ -274,7 +263,6 @@ function FormSubmitExample({ theme }) {
           name="event-date"
           mode="date"
           theme=${theme}
-          tray=${false}
           className=${dateFieldClass}
           value=${value}
           onChange=${setValue}
@@ -292,16 +280,16 @@ function TrayExample({ theme }) {
   const [value, setValue] = useState("");
   return html`
     <div class="section">
-      <label for="tray-example">Mobile Tray (explicit)</label>
+      <label for="tray-example">Mobile Tray (auto)</label>
       <${PreactDatefield}
         id="tray-example"
         mode="date"
         theme=${theme}
-        tray=${true}
+        tray="auto"
         className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
-        placeholder="Tray enabled explicitly"
+        placeholder="Dropdown on desktop, tray on mobile"
       />
       <${ValueDisplay} value=${value} />
     </div>
@@ -318,7 +306,6 @@ function DarkThemeExample() {
         mode="datetime"
         timezone="Asia/Dubai"
         theme="dark"
-        tray=${false}
         className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}

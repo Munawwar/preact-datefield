@@ -73,7 +73,7 @@ function App() {
 | `name` | `string` | `undefined` | Hidden input name |
 | `formSubmitCompatible` | `boolean` | `false` | Renders hidden input |
 | `theme` | `"light" \| "dark" \| "system"` | `"system"` | Visual theme |
-| `tray` | `boolean \| "auto"` | `"auto"` | Mobile tray mode |
+| `tray` | `boolean \| "auto"` | `false` | Mobile tray mode |
 | `trayBreakpoint` | `string` | `"768px"` | Breakpoint when tray is auto |
 | `trayLabel` | `string` | inferred | Tray title |
 | `portal` | `HTMLElement` | `document.body` | Dropdown portal target |

@@ -50,7 +50,7 @@ import "./PreactDatefield.css";
  * @property {boolean} [disabled=false] Disable the component
  * @property {boolean} [formSubmitCompatible=false] Render a hidden input for form submission
  * @property {'light' | 'dark' | 'system'} [theme='system'] Theme
- * @property {boolean | 'auto'} [tray='auto'] Enable mobile tray mode
+ * @property {boolean | 'auto'} [tray=false] Enable mobile tray mode
  * @property {string} [trayBreakpoint='768px'] CSS breakpoint for auto tray mode
  * @property {string} [trayLabel] Label text for tray header
  * @property {boolean} [showClearButton=true] Show clear button
@@ -195,7 +195,7 @@ const PreactDatefield = ({
   disabled = false,
   formSubmitCompatible = false,
   theme = "system",
-  tray = "auto",
+  tray = false,
   trayBreakpoint = "768px",
   trayLabel: trayLabelProp,
   showClearButton = true,

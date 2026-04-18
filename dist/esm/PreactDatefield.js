@@ -1760,7 +1760,7 @@ var PreactDatefield = ({
   disabled = false,
   formSubmitCompatible = false,
   theme = "system",
-  tray = "auto",
+  tray = false,
   trayBreakpoint = "768px",
   trayLabel: trayLabelProp,
   showClearButton = true,

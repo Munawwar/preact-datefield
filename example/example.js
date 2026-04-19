@@ -8,7 +8,17 @@ const dateFieldClass = "example-field example-field--date";
 const datetimeFieldClass = "example-field example-field--datetime";
 
 function ValueDisplay({ value }) {
-  return html`<div class="value-display">Value: <code>${value || "(empty)"}</code></div>`;
+  return html`
+    <div class="value-display">
+      <div class="value-display-inner">
+        <span>Output Value</span>
+        ${value 
+          ? html`<code>${value}</code>` 
+          : html`<span class="empty-value">(empty)</span>`
+        }
+      </div>
+    </div>
+  `;
 }
 
 function DateOnlyExample({ theme }) {
@@ -23,7 +33,7 @@ function DateOnlyExample({ theme }) {
         className=${dateFieldClass}
         value=${value}
         onChange=${setValue}
-        placeholder="Try: Mar 6, 3/25, etc."
+        placeholder="Try: Mar 6, 3/25, tomorrow"
       />
       <${ValueDisplay} value=${value} />
     </div>
@@ -34,11 +44,11 @@ function DateRangeExample({ theme }) {
   const [fromValue, setFromValue] = useState("");
   const [toValue, setToValue] = useState("");
   return html`
-    <div class="section">
+    <div class="section" style="grid-column: 1 / -1;">
       <div class="section-title">Date Range (linked min/max)</div>
       <div class="range-grid">
-        <div class="range-item">
-          <label class="range-sub-label" for="range-from">From</label>
+        <div>
+          <label class="range-sub-label" for="range-from">Start Date</label>
           <${PreactDatefield}
             id="range-from"
             mode="date"
@@ -48,12 +58,12 @@ function DateRangeExample({ theme }) {
             onChange=${setFromValue}
             maxValue=${toValue}
             bounds="inclusive"
-            placeholder="Start date"
+            placeholder="Select start date"
           />
           <${ValueDisplay} value=${fromValue} />
         </div>
-        <div class="range-item">
-          <label class="range-sub-label" for="range-to">To</label>
+        <div>
+          <label class="range-sub-label" for="range-to">End Date</label>
           <${PreactDatefield}
             id="range-to"
             mode="date"
@@ -63,7 +73,7 @@ function DateRangeExample({ theme }) {
             onChange=${setToValue}
             minValue=${fromValue}
             bounds="inclusive"
-            placeholder="End date"
+            placeholder="Select end date"
           />
           <${ValueDisplay} value=${toValue} />
         </div>
@@ -76,11 +86,11 @@ function DatetimeRangeExample({ theme }) {
   const [fromValue, setFromValue] = useState("");
   const [toValue, setToValue] = useState("");
   return html`
-    <div class="section">
-      <div class="section-title">Datetime Range (start/end + min/max)</div>
+    <div class="section" style="grid-column: 1 / -1;">
+      <div class="section-title">Datetime Range (start/end + bounds)</div>
       <div class="range-grid">
-        <div class="range-item">
-          <label class="range-sub-label" for="dt-from">From</label>
+        <div>
+          <label class="range-sub-label" for="dt-from">Start Time</label>
           <${PreactDatefield}
             id="dt-from"
             mode="datetime"
@@ -92,12 +102,12 @@ function DatetimeRangeExample({ theme }) {
             onChange=${setFromValue}
             maxValue=${toValue}
             bounds="inclusive"
-            placeholder="Start datetime"
+            placeholder="e.g. Monday 9am"
           />
           <${ValueDisplay} value=${fromValue} />
         </div>
-        <div class="range-item">
-          <label class="range-sub-label" for="dt-to">To</label>
+        <div>
+          <label class="range-sub-label" for="dt-to">End Time</label>
           <${PreactDatefield}
             id="dt-to"
             mode="datetime"
@@ -109,7 +119,7 @@ function DatetimeRangeExample({ theme }) {
             onChange=${setToValue}
             minValue=${fromValue}
             bounds="inclusive"
-            placeholder="End datetime"
+            placeholder="e.g. Friday 5pm"
           />
           <${ValueDisplay} value=${toValue} />
         </div>
@@ -138,24 +148,32 @@ function DMYExample({ theme }) {
   `;
 }
 
-function RequiredFieldExample({ theme }) {
+function FormIntegrationExample({ theme }) {
   const [value, setValue] = useState("");
   return html`
     <div class="section">
-      <form onSubmit=${(e) => { e.preventDefault(); alert("Form submitted! Value: " + value); }}>
-        <label for="required-date">Required Date</label>
+      <form onSubmit=${(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        alert("Form submitted! Hidden input 'event-date' value: " + formData.get("event-date"));
+      }} style="display: flex; flex-direction: column; height: 100%;">
+        <label for="form-date">Form Integration (Required + Hidden Input)</label>
         <${PreactDatefield}
-          id="required-date"
+          id="form-date"
+          name="event-date"
           mode="date"
           theme=${theme}
           className=${dateFieldClass}
           value=${value}
           onChange=${setValue}
           required=${true}
+          formSubmitCompatible=${true}
           placeholder="Required field"
         />
+        <div class="button-group" style="margin-top: 12px; margin-bottom: 8px;">
+          <button type="submit">Submit Form</button>
+        </div>
         <${ValueDisplay} value=${value} />
-        <button type="submit" style="margin-top: 4px">Submit</button>
       </form>
     </div>
   `;
@@ -164,7 +182,7 @@ function RequiredFieldExample({ theme }) {
 function DisabledExample({ theme }) {
   return html`
     <div class="section">
-      <label for="disabled-date">Disabled</label>
+      <label for="disabled-date">Disabled State</label>
       <${PreactDatefield}
         id="disabled-date"
         mode="date"
@@ -174,6 +192,7 @@ function DisabledExample({ theme }) {
         onChange=${() => {}}
         disabled=${true}
       />
+      <${ValueDisplay} value="2026-03-25" />
     </div>
   `;
 }
@@ -182,7 +201,7 @@ function ProgrammaticExample({ theme }) {
   const [value, setValue] = useState("");
   return html`
     <div class="section">
-      <label for="programmatic">Programmatic Value</label>
+      <label for="programmatic">Programmatic Control</label>
       <${PreactDatefield}
         id="programmatic"
         mode="datetime"
@@ -191,14 +210,14 @@ function ProgrammaticExample({ theme }) {
         className=${datetimeFieldClass}
         value=${value}
         onChange=${setValue}
-        placeholder="Click buttons below"
+        placeholder="Controlled externally"
       />
-      <${ValueDisplay} value=${value} />
-      <div style="display: flex; gap: 8px; margin-top: 4px;">
-        <button type="button" onClick=${() => setValue("2026-03-25T14:00:00.000Z")}>Set to Mar 25, 10am ET</button>
-        <button type="button" onClick=${() => setValue("2026-12-31T23:59:59.999Z")}>Set to NYE midnight</button>
+      <div class="button-group">
+        <button type="button" onClick=${() => setValue("2026-03-25T14:00:00.000Z")}>Set: Mar 25, 10am ET</button>
+        <button type="button" onClick=${() => setValue("2026-12-31T23:59:59.999Z")}>Set: NYE</button>
         <button type="button" onClick=${() => setValue("")}>Clear</button>
       </div>
+      <${ValueDisplay} value=${value} />
     </div>
   `;
 }
@@ -248,34 +267,6 @@ function CustomFormatterExample({ theme }) {
   `;
 }
 
-function FormSubmitExample({ theme }) {
-  const [value, setValue] = useState("");
-  return html`
-    <div class="section">
-      <form onSubmit=${(e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        alert("Form data: " + formData.get("event-date"));
-      }}>
-        <label for="form-date">Form Compatible</label>
-        <${PreactDatefield}
-          id="form-date"
-          name="event-date"
-          mode="date"
-          theme=${theme}
-          className=${dateFieldClass}
-          value=${value}
-          onChange=${setValue}
-          formSubmitCompatible=${true}
-          placeholder="Submits via hidden input"
-        />
-        <${ValueDisplay} value=${value} />
-        <button type="submit" style="margin-top: 4px">Submit Form</button>
-      </form>
-    </div>
-  `;
-}
-
 function TrayExample({ theme }) {
   const [value, setValue] = useState("");
   return html`
@@ -299,8 +290,8 @@ function TrayExample({ theme }) {
 function DarkThemeExample() {
   const [value, setValue] = useState("");
   return html`
-    <div class="section">
-      <label for="dark-date">Explicit Dark Theme</label>
+    <div class="section" style="background: #0f172a; border-color: #1e293b; color: #f8fafc;">
+      <label for="dark-date" style="color: #f8fafc;">Explicit Dark Theme</label>
       <${PreactDatefield}
         id="dark-date"
         mode="datetime"
@@ -311,7 +302,15 @@ function DarkThemeExample() {
         onChange=${setValue}
         placeholder="Always dark"
       />
-      <${ValueDisplay} value=${value} />
+      <div class="value-display" style="margin-top: auto; padding-top: 20px; font-size: 13px; color: #94a3b8;">
+        <div class="value-display-inner" style="background: #020617; border-color: #334155;">
+          <span>Output Value</span>
+          ${value 
+            ? html`<code style="background: #1e293b; color: #e2e8f0;">${value}</code>` 
+            : html`<span class="empty-value">(empty)</span>`
+          }
+        </div>
+      </div>
     </div>
   `;
 }
@@ -328,20 +327,21 @@ function App() {
   }, []);
 
   return html`
-    <div>
-      <${DateOnlyExample} theme=${theme} />
-      <${DateRangeExample} theme=${theme} />
-      <${DatetimeRangeExample} theme=${theme} />
-      <${DMYExample} theme=${theme} />
-      <${TrayExample} theme=${theme} />
-      <${RequiredFieldExample} theme=${theme} />
-      <${DisabledExample} theme=${theme} />
-      <${ProgrammaticExample} theme=${theme} />
-      <${SecondsExample} theme=${theme} />
-      <${CustomFormatterExample} theme=${theme} />
-      <${FormSubmitExample} theme=${theme} />
-      <${DarkThemeExample} />
-    </div>
+    <main class="main-content">
+      <div class="examples-grid">
+        <${DateOnlyExample} theme=${theme} />
+        <${SecondsExample} theme=${theme} />
+        <${TrayExample} theme=${theme} />
+        <${DatetimeRangeExample} theme=${theme} />
+        <${DMYExample} theme=${theme} />
+        <${FormIntegrationExample} theme=${theme} />
+        <${ProgrammaticExample} theme=${theme} />
+        <${DateRangeExample} theme=${theme} />
+        <${DisabledExample} theme=${theme} />
+        <${CustomFormatterExample} theme=${theme} />
+        <${DarkThemeExample} />
+      </div>
+    </main>
   `;
 }
 

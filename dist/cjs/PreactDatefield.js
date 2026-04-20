@@ -2517,6 +2517,7 @@ var TraySearchList = ({
     null
   );
   const virtualKeyboardExplicitlyClosedRef = A2(false);
+  const isMountRef = A2(true);
   const readonlyResetTimeoutRef = A2(
     /** @type {ReturnType<typeof setTimeout> | null} */
     null
@@ -2546,25 +2547,11 @@ var TraySearchList = ({
       readonlyResetTimeoutRef.current = null;
     }, 10);
   }, []);
-  const handleClose = q2(() => {
-    setTrayInputValue("");
-    setVirtualKeyboardHeight(0);
-    virtualKeyboardExplicitlyClosedRef.current = false;
-    virtualKeyboardHeightAdjustSubscription.current?.();
-    virtualKeyboardHeightAdjustSubscription.current = null;
-    if (readonlyResetTimeoutRef.current) {
-      clearTimeout(readonlyResetTimeoutRef.current);
-      readonlyResetTimeoutRef.current = null;
-    }
-    trayInputRef.current?.removeAttribute("readonly");
-    const scrollingElement = (
-      /** @type {HTMLElement} */
-      document.scrollingElement || document.documentElement
-    );
-    scrollingElement.style.overflow = originalOverflowRef.current;
-    onClose();
-  }, [onClose]);
   y2(() => {
+    if (isMountRef.current) {
+      isMountRef.current = false;
+      if (!isOpen) return;
+    }
     if (isOpen) {
       const scrollingElement = (
         /** @type {HTMLElement} */
@@ -2581,22 +2568,21 @@ var TraySearchList = ({
         });
       }
       trayInputRef.current?.focus();
-    }
-  }, [isOpen]);
-  y2(() => {
-    return () => {
-      if (virtualKeyboardHeightAdjustSubscription.current) {
-        virtualKeyboardHeightAdjustSubscription.current();
+      return () => {
+        scrollingElement.style.overflow = originalOverflowRef.current;
+        virtualKeyboardHeightAdjustSubscription.current?.();
         virtualKeyboardHeightAdjustSubscription.current = null;
-      }
-      if (readonlyResetTimeoutRef.current) {
-        clearTimeout(readonlyResetTimeoutRef.current);
-        readonlyResetTimeoutRef.current = null;
-      }
-      trayInputRef.current?.removeAttribute("readonly");
-      virtualKeyboardExplicitlyClosedRef.current = false;
-    };
-  }, []);
+        virtualKeyboardExplicitlyClosedRef.current = false;
+        if (readonlyResetTimeoutRef.current) {
+          clearTimeout(readonlyResetTimeoutRef.current);
+          readonlyResetTimeoutRef.current = null;
+        }
+        trayInputRef.current?.removeAttribute("readonly");
+      };
+    }
+    setTrayInputValue("");
+    setVirtualKeyboardHeight(0);
+  }, [isOpen]);
   if (!isOpen) {
     return null;
   }
@@ -2611,12 +2597,12 @@ var TraySearchList = ({
         style: { display: isOpen ? null : "none" },
         onClick: (e3) => {
           if (e3.target === trayModalRef.current) {
-            handleClose();
+            onClose();
           }
         },
         onKeyDown: (e3) => {
           if (e3.key === "Escape") {
-            handleClose();
+            onClose();
           }
         },
         role: "dialog",
@@ -2645,7 +2631,7 @@ var TraySearchList = ({
                 onChange: handleTrayInputChange,
                 onKeyDown: (e3) => {
                   if (e3.key === "Escape") {
-                    handleClose();
+                    onClose();
                   }
                 },
                 className: `PreactDatefield-trayInput ${!trayLabel ? "PreactDatefield-trayInput--noLabel" : ""}`,
